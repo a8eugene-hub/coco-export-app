@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createServiceClient } from "@/lib/supabaseClient";
 import { Card, SectionTitle, StatusBadge } from "@/components/ui";
 
@@ -24,12 +25,18 @@ export default async function OrdersPage() {
     }) ?? [];
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-4 px-4 py-6">
-      <header className="flex items-center justify-between">
+    <div className="flex flex-col gap-4">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-slate-900">注文一覧</h1>
           <p className="text-sm text-slate-600">Order / Payment1 / Payment2 のステータスを一覧します。</p>
         </div>
+        <Link
+          href="/orders/new"
+          className="inline-flex items-center rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+        >
+          注文を作成
+        </Link>
       </header>
 
       <Card>

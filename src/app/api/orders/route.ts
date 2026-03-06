@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
     proforma_no,
     order_date,
     customer_id,
+    customer_name,
     destination,
     incoterms,
     currency = "USD",
@@ -51,13 +52,27 @@ export async function POST(req: NextRequest) {
     payment2_due_date,
   } = body;
 
+  let resolvedCustomerId = customer_id as string | null;
+  if (!resolvedCustomerId && customer_name) {
+    const { data: newCustomer, error: custErr } = await supabase
+      .from("customers")
+      .insert({ name: customer_name })
+      .select("*")
+      .single();
+    if (custErr || !newCustomer) {
+      console.error("POST /api/orders customer create error", custErr);
+      return NextResponse.json({ error: "Failed to create customer" }, { status: 500 });
+    }
+    resolvedCustomerId = newCustomer.id;
+  }
+
   const { data: order, error: insertError } = await supabase
     .from("orders")
     .insert({
       order_no,
       proforma_no,
       order_date,
-      customer_id,
+      customer_id: resolvedCustomerId,
       destination,
       incoterms,
       currency,
