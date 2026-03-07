@@ -198,6 +198,20 @@ alter table public.documents add constraint documents_scope_check
     (scope = 'PAYMENT' and payment_id is not null and order_id is not null)
   );
 
+-- DIA注文読み込み用：アップロード済みPDFと抽出データの保管
+create table if not exists public.order_draft_uploads (
+  id uuid primary key default gen_random_uuid(),
+  file_name text not null,
+  storage_bucket text not null default 'documents-private',
+  storage_path text not null,
+  extracted_data jsonb,
+  uploaded_by uuid references auth.users(id) on delete set null,
+  uploaded_at timestamptz default now()
+);
+alter table public.order_draft_uploads enable row level security;
+create policy if not exists order_draft_uploads_select on public.order_draft_uploads for select using (true);
+create policy if not exists order_draft_uploads_insert on public.order_draft_uploads for insert with check (auth.uid() is not null);
+
 -- ===========================
 -- 3. RLS（シンプル版）
 --   - admin / manager / viewer で read は全員OK
