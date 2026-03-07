@@ -1,5 +1,6 @@
-import { createBrowserClient, createServerClient, type CookieOptions } from "@supabase/ssr";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createBrowserClient, createServerClient } from "@supabase/ssr";
+import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
+import type { NextRequest } from "next/server";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -38,5 +39,13 @@ export function createServiceClient(): SupabaseClient {
       persistSession: false,
     },
   });
+}
+
+/** API ルート用: リクエストの Cookie から認証ユーザーを取得。未ログインなら null */
+export async function getAuthUserFromRequest(req: NextRequest): Promise<User | null> {
+  const cookieStore = { getAll: () => req.cookies.getAll() };
+  const client = createClientServer(cookieStore);
+  const { data: { user } } = await client.auth.getUser();
+  return user ?? null;
 }
 

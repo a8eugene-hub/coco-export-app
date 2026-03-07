@@ -13,6 +13,10 @@ export function SeedButton() {
     try {
       const res = await fetch("/api/seed", { method: "POST" });
       const json = await res.json();
+      if (res.status === 401) {
+        window.location.href = "/login";
+        return;
+      }
       if (!res.ok) {
         setMessage(json?.error ?? "デモデータ作成に失敗しました");
         return;

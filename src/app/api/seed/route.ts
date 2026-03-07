@@ -1,7 +1,9 @@
-import { NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabaseClient";
+import { NextResponse, type NextRequest } from "next/server";
+import { createServiceClient, getAuthUserFromRequest } from "@/lib/supabaseClient";
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const user = await getAuthUserFromRequest(req);
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const supabase = createServiceClient();
 
   // 1) customer: 既存がいれば使う、なければ新規作成

@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createServiceClient } from "@/lib/supabaseClient";
+import { createServiceClient, getAuthUserFromRequest } from "@/lib/supabaseClient";
 
 export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string; txId: string }> }) {
+  const user = await getAuthUserFromRequest(req);
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { txId } = await context.params;
   const supabase = createServiceClient();
   const body = await req.json();
@@ -18,7 +20,9 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
   return NextResponse.json(data);
 }
 
-export async function DELETE(_req: NextRequest, context: { params: Promise<{ id: string; txId: string }> }) {
+export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string; txId: string }> }) {
+  const user = await getAuthUserFromRequest(req);
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { txId } = await context.params;
   const supabase = createServiceClient();
   const { error } = await supabase.from("payment_transactions").delete().eq("id", txId);

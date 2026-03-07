@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createServiceClient } from "@/lib/supabaseClient";
+import { createServiceClient, getAuthUserFromRequest } from "@/lib/supabaseClient";
 
 const SHIPMENT_TASK_DEFS = [
   { task_key: "PRODUCTION", title: "Production" },
@@ -10,7 +10,9 @@ const SHIPMENT_TASK_DEFS = [
   { task_key: "DELIVERED", title: "Delivered" },
 ] as const;
 
-export async function GET(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const user = await getAuthUserFromRequest(req);
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id: orderId } = await context.params;
   const supabase = createServiceClient();
   const { data, error } = await supabase
@@ -28,6 +30,8 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ id: st
 }
 
 export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const user = await getAuthUserFromRequest(req);
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id: orderId } = await context.params;
   const supabase = createServiceClient();
   const body = await req.json();

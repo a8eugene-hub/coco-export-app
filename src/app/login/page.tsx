@@ -1,9 +1,12 @@
 "use client";
 
 import { createClientBrowser } from "@/lib/supabaseClient";
-import { type FormEvent, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, type FormEvent, useState } from "react";
 
-export default function LoginPage() {
+function LoginForm() {
+  const searchParams = useSearchParams();
+  const messagePasswordReset = searchParams.get("message") === "password_reset";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -37,6 +40,11 @@ export default function LoginPage() {
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm">
         <h1 className="text-xl font-semibold tracking-tight text-slate-900">ログイン</h1>
         <p className="mt-2 text-sm text-slate-600">登録済みのメールアドレスとパスワードでサインインしてください。</p>
+        {messagePasswordReset && (
+          <p className="mt-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-800">
+            パスワードを変更しました。新しいパスワードでログインしてください。
+          </p>
+        )}
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-700">
@@ -81,6 +89,14 @@ export default function LoginPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-slate-50 text-sm text-slate-500">読み込み中...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }
 

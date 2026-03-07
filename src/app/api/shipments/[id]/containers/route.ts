@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createServiceClient } from "@/lib/supabaseClient";
+import { createServiceClient, getAuthUserFromRequest } from "@/lib/supabaseClient";
 
-export async function GET(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const user = await getAuthUserFromRequest(req);
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id: shipmentId } = await context.params;
   const supabase = createServiceClient();
   const { data, error } = await supabase
@@ -17,6 +19,8 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ id: st
 }
 
 export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const user = await getAuthUserFromRequest(req);
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id: shipmentId } = await context.params;
   const supabase = createServiceClient();
   const body = await req.json();

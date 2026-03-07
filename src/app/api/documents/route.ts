@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createServiceClient } from "@/lib/supabaseClient";
+import { createServiceClient, getAuthUserFromRequest } from "@/lib/supabaseClient";
 
 const BUCKET = "documents-private";
 const DOC_TYPES = ["PO", "PROFORMA", "COMMERCIAL_INVOICE", "PACKING_LIST", "BL", "PHYTO", "COO", "FUMIGATION", "PAYMENT_RECEIPT", "OTHER"] as const;
@@ -10,6 +10,8 @@ export async function GET(req: NextRequest) {
   const orderId = searchParams.get("order_id");
   const shipmentId = searchParams.get("shipment_id");
   const paymentId = searchParams.get("payment_id");
+  const user = await getAuthUserFromRequest(req);
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!scope || !orderId) {
     return NextResponse.json({ error: "scope and order_id required" }, { status: 400 });
   }
@@ -26,6 +28,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const user = await getAuthUserFromRequest(req);
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const supabase = createServiceClient();
   const formData = await req.formData();
   const scope = formData.get("scope") as string | null;

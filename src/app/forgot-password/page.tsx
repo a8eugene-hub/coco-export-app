@@ -17,10 +17,19 @@ export default function ForgotPasswordPage() {
     try {
       const supabase = createClientBrowser();
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${typeof window !== "undefined" ? window.location.origin : ""}/login`,
+        redirectTo: `${typeof window !== "undefined" ? window.location.origin : ""}/reset-password`,
       });
       if (resetError) {
-        setError(resetError.message);
+        const msg = resetError.message.toLowerCase();
+        if (msg.includes("rate limit") || msg.includes("email rate limit")) {
+          setError("送信回数が上限に達しました。しばらく（目安：1時間）待ってから再度お試しください。");
+        } else if (msg.includes("user not found") || msg.includes("invalid") && msg.includes("email")) {
+          setError("このメールアドレスは登録されていません。入力内容をご確認ください。");
+        } else if (msg.includes("email not confirmed")) {
+          setError("メールアドレスの確認がまだ完了していません。登録時の確認メールをご確認ください。");
+        } else {
+          setError("送信に失敗しました。入力内容を確認するか、しばらく経ってから再度お試しください。");
+        }
         return;
       }
       setSuccess(true);
