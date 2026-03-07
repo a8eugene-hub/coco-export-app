@@ -13,11 +13,17 @@ export function createClientBrowser() {
   return createBrowserClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 }
 
-export function createClientServer(
-  cookies: any,
-): SupabaseClient {
+export function createClientServer(cookieStore: {
+  getAll: () => { name: string; value: string }[];
+}): SupabaseClient {
   return createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    cookies,
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
+      },
+      // Server Components では Cookie を書けないため未設定。
+      // ミドルウェアでセッション更新・書き戻しを行う。
+    },
   });
 }
 
