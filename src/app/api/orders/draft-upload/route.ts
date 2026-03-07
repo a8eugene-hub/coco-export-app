@@ -16,8 +16,14 @@ function extractOrderFromDiaPdf(text: string): Record<string, unknown> {
   const proformaMatch = full.match(/Proforma\s+No\.?\s*:?\s*([A-Z0-9\-]+)/i);
   if (proformaMatch) result.proforma_no = proformaMatch[1].trim();
 
-  const refMatch = full.match(/Customer\s+Ref\s+No\.?\s*:?\s*([A-Z0-9\/\-\s]+?)(?=\s+Date|$|Buyer)/i)
-    ?? full.match(/Ref\s+No\.?\s*:?\s*([A-Z0-9\/\-\s]+)/i);
+  const poNoMatch = full.match(/P\/O\s+No\.?\s*([A-Z0-9\/\-]+)/i)
+    ?? full.match(/CO\/AR[\-\s]*(\d[\d\-]*)/i);
+  if (poNoMatch) result.order_no = poNoMatch[1].replace(/\s+/g, "").trim();
+
+  const refMatch = !result.order_no && (
+    full.match(/Customer\s+Ref\s+No\.?\s*:?\s*([A-Z0-9\/\-\s]+?)(?=\s+Date|$|Buyer)/i)
+    ?? full.match(/Ref\s+No\.?\s*:?\s*([A-Z0-9\/\-\s]+)/i)
+  );
   if (refMatch) result.order_no = refMatch[1].replace(/\s+/g, "").trim();
 
   const dateMatch = full.match(/Date\s*:?\s*(\d{1,2})\/(\d{1,2})\/(\d{2})/);
@@ -31,8 +37,69 @@ function extractOrderFromDiaPdf(text: string): Record<string, unknown> {
   const buyerMatch = full.match(/Buyer\s*:?\s*([^\n]+?)(?=\s+Consignee|$)/i);
   if (buyerMatch) result.customer_name = buyerMatch[1].trim().split(/\s{2,}|\n/)[0].trim();
 
-  const destMatch = full.match(/Destination\s*:?\s*([^\n]+?)(?=\s*Mode|$)/i);
+  const destMatch = full.match(/Destination\s*:?\s*([A-Za-z]+)/i)
+    ?? full.match(/Destination\s*:?\s*([^\n]+?)(?=\s*Mode|$)/i);
   if (destMatch) result.destination = destMatch[1].trim();
+
+  // P/O 形式: 宛先（Dear Mr ...）
+  const dearMatch = full.match(/Dear\s+M\.?r\.?\s+([^.]+?)(?:\.|,|\n|$)/gi);
+  if (dearMatch && dearMatch.length >= 1) {
+    const addresseesStr = dearMatch
+      .map((s) => s.replace(/^Dear\s+M\.?r\.?\s*/i, "").replace(/\s*\.\s*$/, "").trim())
+      .filter(Boolean)
+      .join("; ");
+    if (addresseesStr) result.addressees = addresseesStr;
+  }
+
+  // P/O 形式: 2x40H/C, AGED 3mm, 28kg, 675 Bales
+  const containerPoMatch = full.match(/(\d+\s*x\s*\d+H\/C)/i) ?? full.match(/(\d+x\d+)\s*H\/C/i);
+  if (containerPoMatch) result.container_info = containerPoMatch[1].replace(/\s+/g, "").trim();
+
+  const balesMatch = full.match(/(\d+)\s*Bales?/i) ?? full.match(/Bales?\s*(\d+)/i);
+  if (balesMatch) result.bales_count = parseInt(balesMatch[1], 10);
+
+  const weightBaleMatch = full.match(/(\d+)\s*kg\s*(?:\d+|\d+\s*Bales?|ni\s*HC)/i) ?? full.match(/(\d+)\s*kg/i);
+  if (weightBaleMatch) result.weight_per_bale = `${weightBaleMatch[1]}kg`;
+
+  const agedMatch = full.match(/AGED\s*(\d+\s*mm[^.]*?)(?:\.|,|Bales?|$)/i) ?? full.match(/AGED\s*(\d+mm[^.]*)/i);
+  if (agedMatch) result.product_description = agedMatch[1].replace(/\s+/g, " ").trim();
+
+  // P/O 形式: Moisture 50-60%, own factory, Print of Bale
+  const moistureMatch = full.match(/Moisture\s*(\d+\s*[-–]\s*\d+%?)/i);
+  const ownFactoryMatch = full.match(/own\s+factory[^.]*|not\s+acceptable[^.]*outside\s+factory/i);
+  const phytoMatch = full.match(/\*\*?\s*Phytosanitary\s+Certificate\s*\*\*?([^*]+?)(?=\*\*|Total|$)/is);
+  const specParts: string[] = [];
+  if (moistureMatch) specParts.push(`Moisture ${moistureMatch[1].trim()}`);
+  if (ownFactoryMatch) specParts.push("Own factory only");
+  if (specParts.length) result.product_specs = specParts.join(". ");
+  if (phytoMatch) result.phyto_instructions = phytoMatch[1].replace(/\s+/g, " ").trim().slice(0, 500);
+
+  // P/O 形式: Price ... US 10.30/bale (THC included)
+  const priceBaleMatch = full.match(/US\s*(\d+[\d.]*)\s*\/?\s*bale/i) ?? full.match(/(\d+[\d.]*)\s*\/?\s*bale/i);
+  if (priceBaleMatch) result.unit_price = parseFloat(priceBaleMatch[1].replace(/,/g, ""));
+  const cfiMatch = full.match(/(CFI|CIF)\s+([A-Z]+)(?:[^.]*THC[^.]*)?/i);
+  if (cfiMatch) result.price_term = `${cfiMatch[1]} ${cfiMatch[2]}`.trim() + (full.includes("THC") ? " (THC included in Japan)" : "");
+
+  // P/O 形式: Port demurrage Free Time: 14days
+  const demurrageMatch = full.match(/demurrage\s+Free\s+Time\s*:?\s*(\d+)\s*day/i);
+  if (demurrageMatch) result.demurrage_free_days = parseInt(demurrageMatch[1], 10);
+
+  // P/O 形式: ETA NAGOYA, second week of April
+  const etaMatch = full.match(/ETA\s+([A-Z]+)/i);
+  const aprilMatch = full.match(/second\s+week\s+of\s+(\w+)/i) ?? full.match(/(\w+)\s+by\s+(\w+)/i);
+  if (etaMatch || aprilMatch) {
+    const etaPart = etaMatch ? `ETA ${etaMatch[1]}` : "";
+    const weekPart = aprilMatch ? (aprilMatch[0] || "") : "";
+    result.requested_eta = [etaPart, weekPart].filter(Boolean).join(". ");
+  }
+
+  // Consignee: Asei Osawa President DIA Corporation
+  const consigneeLineMatch = full.match(/as\s+aconsignee[^.]*?([A-Za-z]+\s+[A-Za-z]+)\s+President\s+([A-Za-z\s]+Corporation)/i)
+    ?? full.match(/([A-Za-z]+\s+[A-Za-z]+)\s+President\s+([A-Za-z\s]+Corporation)/i);
+  if (consigneeLineMatch) {
+    result.consignee_contact = consigneeLineMatch[1].trim();
+    result.consignee_name = consigneeLineMatch[2].trim();
+  }
 
   const currencyMatch = full.match(/Currency\s*:?\s*([A-Z]{3})/i);
   result.currency = currencyMatch ? currencyMatch[1].toUpperCase() : "USD";
@@ -154,7 +221,10 @@ export async function POST(req: NextRequest) {
 
   if (insertError) {
     console.error("draft-upload insert error", insertError);
-    return NextResponse.json({ error: "登録に失敗しました" }, { status: 500 });
+    const hint = insertError.message?.includes("order_draft_uploads")
+      ? " Supabase で order_draft_uploads テーブルを作成してください（schema.sql の該当ブロックを実行）。"
+      : "";
+    return NextResponse.json({ error: `登録に失敗しました。${hint}` }, { status: 500 });
   }
 
   return NextResponse.json({

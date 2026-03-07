@@ -18,7 +18,7 @@ export default async function OrderEditPage({ params }: Params) {
   const dataClient = process.env.SUPABASE_SERVICE_ROLE_KEY ? createServiceClient() : authClient;
   const { data: order } = await dataClient
     .from("orders")
-    .select("id, order_no, proforma_no, destination, incoterms, currency, notes, order_date")
+    .select("id, order_no, proforma_no, destination, incoterms, currency, notes, order_date, addressees, product_description, container_info, bales_count, weight_per_bale, product_specs, unit_price, price_term, demurrage_free_days, requested_eta, phyto_instructions, consignee_name, consignee_contact, shipper_name")
     .eq("id", id)
     .single();
 
@@ -41,6 +41,20 @@ export default async function OrderEditPage({ params }: Params) {
           currency: order.currency ?? "USD",
           notes: order.notes ?? "",
           order_date: order.order_date ?? "",
+          addressees: order.addressees ?? "",
+          product_description: order.product_description ?? "",
+          container_info: order.container_info ?? "",
+          bales_count: order.bales_count ?? null,
+          weight_per_bale: order.weight_per_bale ?? "",
+          product_specs: order.product_specs ?? "",
+          unit_price: order.unit_price ?? null,
+          price_term: order.price_term ?? "",
+          demurrage_free_days: order.demurrage_free_days ?? null,
+          requested_eta: order.requested_eta ?? "",
+          phyto_instructions: order.phyto_instructions ?? "",
+          consignee_name: order.consignee_name ?? "",
+          consignee_contact: order.consignee_contact ?? "",
+          shipper_name: order.shipper_name ?? "",
         }}
       />
     </div>

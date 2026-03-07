@@ -31,9 +31,18 @@ export function DiaOrderUploadButton() {
         method: "POST",
         body: formData,
       });
-      const json = await res.json();
+      const text = await res.text();
+      let json: { error?: string; draft_id?: string } = {};
+      try {
+        json = text ? JSON.parse(text) : {};
+      } catch {
+        if (!res.ok) {
+          setError(`エラー (${res.status})。本番では order_draft_uploads テーブルと Storage の作成を確認してください。`);
+          return;
+        }
+      }
       if (!res.ok) {
-        setError(json?.error ?? "読み込みに失敗しました");
+        setError(json?.error ?? `読み込みに失敗しました (${res.status})`);
         return;
       }
       if (json.draft_id) {
@@ -42,7 +51,7 @@ export function DiaOrderUploadButton() {
       }
     } catch (err) {
       console.error(err);
-      setError("通信に失敗しました");
+      setError("通信に失敗しました。ネットワークとブラウザコンソールを確認してください。");
     } finally {
       setLoading(false);
     }
