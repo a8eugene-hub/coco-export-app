@@ -21,8 +21,12 @@ export async function POST() {
       .single();
     if (cErr || !inserted) {
       console.error("seed customer error", cErr);
+      const hint =
+        process.env.SUPABASE_SERVICE_ROLE_KEY
+          ? "Supabase の RLS で customers への書き込みが許可されているか確認してください。"
+          : "本番（Vercel）では環境変数 SUPABASE_SERVICE_ROLE_KEY を追加するとデモデータを作成できます。";
       return NextResponse.json(
-        { error: "顧客の作成に失敗しました。Supabase の RLS で customers への書き込みが許可されているか確認してください。" },
+        { error: `顧客の作成に失敗しました。${hint}` },
         { status: 500 },
       );
     }

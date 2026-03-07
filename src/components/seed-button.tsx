@@ -28,10 +28,14 @@ export function SeedButton() {
 
   return (
     <div className="flex flex-col items-start gap-2">
-      <Button onClick={run} disabled={loading} variant="secondary">
+      <Button onClick={run} disabled={loading}>
         {loading ? "作成中..." : "デモデータを作成"}
       </Button>
-      {message && <p className="text-xs text-slate-600">{message}</p>}
+      {message && (
+        <p className={`text-xs ${message.startsWith("デモデータを作成しました") ? "text-emerald-600" : "text-rose-600"}`}>
+          {message}
+        </p>
+      )}
     </div>
   );
 }

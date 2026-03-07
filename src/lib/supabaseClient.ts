@@ -28,10 +28,11 @@ export function createClientServer(cookieStore: {
 }
 
 export function createServiceClient(): SupabaseClient {
-  if (!SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error("SUPABASE_SERVICE_ROLE_KEY が設定されていません。.env.local を確認してください。");
+  const key = SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY;
+  if (!key) {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY または NEXT_PUBLIC_SUPABASE_ANON_KEY を設定してください。");
   }
-  return createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  return createClient(SUPABASE_URL, key, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
