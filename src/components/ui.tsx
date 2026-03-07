@@ -71,6 +71,7 @@ export function Input({
   placeholder,
   required,
   type = "text",
+  step,
 }: {
   label: string;
   value: string;
@@ -78,6 +79,7 @@ export function Input({
   placeholder?: string;
   required?: boolean;
   type?: string;
+  step?: string;
 }) {
   return (
     <div className="flex flex-col gap-1">
@@ -91,6 +93,7 @@ export function Input({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         required={required}
+        step={step}
         className="rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
       />
     </div>

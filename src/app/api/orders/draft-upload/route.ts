@@ -67,7 +67,7 @@ function extractOrderFromDiaPdf(text: string): Record<string, unknown> {
   // P/O 形式: Moisture 50-60%, own factory, Print of Bale
   const moistureMatch = full.match(/Moisture\s*(\d+\s*[-–]\s*\d+%?)/i);
   const ownFactoryMatch = full.match(/own\s+factory[^.]*|not\s+acceptable[^.]*outside\s+factory/i);
-  const phytoMatch = full.match(/\*\*?\s*Phytosanitary\s+Certificate\s*\*\*?([^*]+?)(?=\*\*|Total|$)/is);
+  const phytoMatch = full.match(/\*\*?\s*Phytosanitary\s+Certificate\s*\*\*?([\s\S]*?)(?=\*\*|Total|$)/i);
   const specParts: string[] = [];
   if (moistureMatch) specParts.push(`Moisture ${moistureMatch[1].trim()}`);
   if (ownFactoryMatch) specParts.push("Own factory only");
