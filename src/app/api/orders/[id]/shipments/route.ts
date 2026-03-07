@@ -10,8 +10,8 @@ const SHIPMENT_TASK_DEFS = [
   { task_key: "DELIVERED", title: "Delivered" },
 ] as const;
 
-export async function GET(_req: NextRequest, context: any) {
-  const { orderId } = await context.params;
+export async function GET(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id: orderId } = await context.params;
   const supabase = createServiceClient();
   const { data, error } = await supabase
     .from("shipments")
@@ -27,8 +27,8 @@ export async function GET(_req: NextRequest, context: any) {
   return NextResponse.json(data);
 }
 
-export async function POST(req: NextRequest, context: any) {
-  const { orderId } = await context.params;
+export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id: orderId } = await context.params;
   const supabase = createServiceClient();
   const body = await req.json();
 

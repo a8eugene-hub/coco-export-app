@@ -35,14 +35,13 @@ import { redirect } from "next/navigation";
 import { createClientServer } from "@/lib/supabaseClient";
 import { Card, ProgressBar, SectionTitle, StatusBadge } from "@/components/ui";
 import { PaymentWidget } from "@/components/payment-widget";
+import { ShipmentAddForm } from "@/components/shipment-add-form";
+import { TaskDateEdit } from "@/components/task-date-edit";
 
-type Params = {
-  params: {
-    id: string;
-  };
-};
+type Params = { params: Promise<{ id: string }> };
 
 export default async function OrderDetailPage({ params }: Params) {
+  const { id } = await params;
   const cookieStore = await cookies();
   const supabase = createClientServer(cookieStore as any);
   const {
@@ -50,7 +49,7 @@ export default async function OrderDetailPage({ params }: Params) {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: order } = await fetchOrderWithRelations(supabase, params.id);
+  const { data: order } = await fetchOrderWithRelations(supabase, id);
   if (!order) {
     redirect("/orders");
   }
@@ -83,21 +82,7 @@ export default async function OrderDetailPage({ params }: Params) {
         <div className="space-y-4">
           <Card>
             <SectionTitle>Order工程（1-4）</SectionTitle>
-            <ul className="mt-2 space-y-2 text-xs">
-              {orderTasks.map((t) => (
-                <li key={t.id} className="flex items-center justify-between rounded-lg border border-slate-100 p-2">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-slate-900">{t.title}</span>
-                      <StatusBadge label={t.status} tone={t.completed_date ? "green" : "gray"} />
-                    </div>
-                    <div className="mt-1 text-[11px] text-slate-500">
-                      予定: {t.planned_date ?? "-"} / 完了: {t.completed_date ?? "-"}
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <TaskDateEdit tasks={orderTasks} />
           </Card>
 
           <Card>
@@ -113,7 +98,7 @@ export default async function OrderDetailPage({ params }: Params) {
                         {s.bl_no || "BL未確定"}
                       </a>
                       <span className="text-[11px] text-slate-500">
-                        ETD {s.etd} / ETA {s.eta}
+                        ETD {s.etd ?? "-"} / ETA {s.eta ?? "-"}
                       </span>
                     </div>
                     <div className="mt-2">
@@ -125,6 +110,9 @@ export default async function OrderDetailPage({ params }: Params) {
                   </div>
                 );
               })}
+            </div>
+            <div className="mt-3">
+              <ShipmentAddForm orderId={order.id} />
             </div>
           </Card>
         </div>
