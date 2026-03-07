@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { cookies } from "next/headers";
 type ShipmentTask = {
   id: string;
   title: string;
@@ -23,7 +24,7 @@ type ShipmentDetail = {
   payments: ShipmentPayments[];
 };
 import { redirect } from "next/navigation";
-import { createServiceClient } from "@/lib/supabaseClient";
+import { createClientServer } from "@/lib/supabaseClient";
 import { Card, ProgressBar, SectionTitle, StatusBadge } from "@/components/ui";
 import { PaymentWidget } from "@/components/payment-widget";
 
@@ -34,7 +35,12 @@ type Params = {
 };
 
 export default async function ShipmentDetailPage({ params }: Params) {
-  const supabase = createServiceClient();
+  const cookieStore = await cookies();
+  const supabase = createClientServer(cookieStore as any);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
 
   const { data: shipment } = await fetchShipmentWithRelations(supabase, params.id);
 

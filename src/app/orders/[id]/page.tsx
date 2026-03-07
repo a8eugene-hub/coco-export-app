@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { cookies } from "next/headers";
 type OrderTask = {
   id: string;
   scope: "ORDER" | "SHIPMENT";
@@ -31,7 +32,7 @@ type OrderDetail = {
   tasks: OrderTask[];
 };
 import { redirect } from "next/navigation";
-import { createServiceClient } from "@/lib/supabaseClient";
+import { createClientServer } from "@/lib/supabaseClient";
 import { Card, ProgressBar, SectionTitle, StatusBadge } from "@/components/ui";
 import { PaymentWidget } from "@/components/payment-widget";
 
@@ -42,7 +43,12 @@ type Params = {
 };
 
 export default async function OrderDetailPage({ params }: Params) {
-  const supabase = createServiceClient();
+  const cookieStore = await cookies();
+  const supabase = createClientServer(cookieStore as any);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
 
   const { data: order } = await fetchOrderWithRelations(supabase, params.id);
   if (!order) {

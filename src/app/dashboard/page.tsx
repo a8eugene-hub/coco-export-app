@@ -1,10 +1,19 @@
 import Link from "next/link";
-import { createServiceClient } from "@/lib/supabaseClient";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { createClientServer } from "@/lib/supabaseClient";
 import { Card, SectionTitle, StatusBadge } from "@/components/ui";
-import { SeedButton } from "@/components/seed-button";
 
 export default async function DashboardPage() {
-  const supabase = createServiceClient();
+  const cookieStore = await cookies();
+  const supabase = createClientServer(cookieStore as any);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
 
   const today = new Date().toISOString().slice(0, 10);
 
@@ -34,21 +43,18 @@ export default async function DashboardPage() {
   const recent = recentOrders ?? [];
 
   return (
-    <div className="flex flex-col gap-4">
-      <header className="flex flex-wrap items-center justify-between gap-3">
+    <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-4 px-4 py-6">
+      <header className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-slate-900">ダッシュボード</h1>
           <p className="text-sm text-slate-600">遅延タスク・今週の出荷・最近の案件を確認します。</p>
         </div>
-        <div className="flex items-center gap-2">
-          <SeedButton />
-          <Link
-            href="/orders"
-            className="inline-flex items-center rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
-          >
-            注文一覧へ
-          </Link>
-        </div>
+        <Link
+          href="/orders"
+          className="inline-flex items-center rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+        >
+          注文一覧へ
+        </Link>
       </header>
 
       <main className="grid gap-4 md:grid-cols-3">

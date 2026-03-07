@@ -4,19 +4,29 @@ import { createServiceClient } from "@/lib/supabaseClient";
 export async function POST() {
   const supabase = createServiceClient();
 
-  // 1) customer
-  const { data: customer, error: cErr } = await supabase
-    .from("customers")
-    .insert({
-      name: "SAMPLE CUSTOMER",
-      country: "Japan",
-      email: "sample@example.com",
-    })
-    .select("*")
-    .single();
-  if (cErr || !customer) {
-    console.error("seed customer error", cErr);
-    return NextResponse.json({ error: "seed failed (customer)" }, { status: 500 });
+  // 1) customer: 既存がいれば使う、なければ新規作成
+  let customer: { id: string } | null = null;
+  const { data: existing } = await supabase.from("customers").select("id").limit(1).maybeSingle();
+  if (existing) {
+    customer = existing;
+  } else {
+    const { data: inserted, error: cErr } = await supabase
+      .from("customers")
+      .insert({
+        name: "SAMPLE CUSTOMER",
+        country: "Japan",
+        email: "sample@example.com",
+      })
+      .select("id")
+      .single();
+    if (cErr || !inserted) {
+      console.error("seed customer error", cErr);
+      return NextResponse.json(
+        { error: "顧客の作成に失敗しました。Supabase の RLS で customers への書き込みが許可されているか確認してください。" },
+        { status: 500 },
+      );
+    }
+    customer = inserted;
   }
 
   // 2) order (+ auto tasks/payments via same logic as /api/orders would do)

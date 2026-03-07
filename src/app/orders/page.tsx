@@ -1,5 +1,6 @@
-import Link from "next/link";
-import { createServiceClient } from "@/lib/supabaseClient";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { createClientServer } from "@/lib/supabaseClient";
 import { Card, SectionTitle, StatusBadge } from "@/components/ui";
 
 type PaymentRow = {
@@ -8,7 +9,15 @@ type PaymentRow = {
 };
 
 export default async function OrdersPage() {
-  const supabase = createServiceClient();
+  const cookieStore = await cookies();
+  const supabase = createClientServer(cookieStore as any);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
 
   const { data: orders } = await supabase
     .from("orders")
@@ -25,54 +34,45 @@ export default async function OrdersPage() {
     }) ?? [];
 
   return (
-    <div className="flex flex-col gap-4">
-      <header className="flex flex-wrap items-center justify-between gap-3">
+    <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-4 px-4 py-6">
+      <header className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-slate-900">注文一覧</h1>
           <p className="text-sm text-slate-600">Order / Payment1 / Payment2 のステータスを一覧します。</p>
         </div>
-        <Link
-          href="/orders/new"
-          className="inline-flex items-center rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
-        >
-          注文を作成
-        </Link>
       </header>
 
       <Card>
         <SectionTitle>Orders</SectionTitle>
-        <p className="mt-1 text-xs text-slate-600">
-          文字が薄く見えにくい場合があったため、一覧のコントラストを強めています。
-        </p>
         <div className="mt-3 overflow-x-auto">
-          <table className="min-w-full border-separate border-spacing-y-1 text-left text-sm">
-            <thead className="text-xs text-slate-800">
+          <table className="min-w-full border-separate border-spacing-y-1 text-left text-xs">
+            <thead className="text-[11px] text-slate-500">
               <tr>
-                <th className="px-3 py-2">Order No</th>
-                <th className="px-3 py-2">顧客</th>
-                <th className="px-3 py-2">目的地</th>
-                <th className="px-3 py-2">Payment1</th>
-                <th className="px-3 py-2">Payment2</th>
-                <th className="px-3 py-2">更新日</th>
+                <th className="px-3 py-1">Order No</th>
+                <th className="px-3 py-1">顧客</th>
+                <th className="px-3 py-1">目的地</th>
+                <th className="px-3 py-1">Payment1</th>
+                <th className="px-3 py-1">Payment2</th>
+                <th className="px-3 py-1">更新日</th>
               </tr>
             </thead>
             <tbody>
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-3 py-3 text-center text-sm text-slate-600">
+                  <td colSpan={6} className="px-3 py-3 text-center text-xs text-slate-500">
                     まだOrderがありません。
                   </td>
                 </tr>
               )}
               {rows.map((o) => (
-                <tr key={o.id} className="rounded-lg bg-white text-slate-900 shadow-sm">
-                  <td className="px-3 py-2 font-semibold">
-                    <a href={`/orders/${o.id}`} className="hover:underline">
+                <tr key={o.id} className="rounded-lg bg-white shadow-sm">
+                  <td className="px-3 py-2">
+                    <a href={`/orders/${o.id}`} className="font-medium text-slate-900 hover:underline">
                       {o.order_no}
                     </a>
                   </td>
-                  <td className="px-3 py-2">{o.customers?.name ?? "-"}</td>
-                  <td className="px-3 py-2">{o.destination ?? "-"}</td>
+                  <td className="px-3 py-2">{o.customers?.name}</td>
+                  <td className="px-3 py-2">{o.destination}</td>
                   <td className="px-3 py-2">
                     {o.payment1 && (
                       <StatusBadge
@@ -89,7 +89,7 @@ export default async function OrdersPage() {
                       />
                     )}
                   </td>
-                  <td className="px-3 py-2 text-slate-700">{o.updated_at?.slice(0, 10) ?? "-"}</td>
+                  <td className="px-3 py-2 text-slate-500">{o.updated_at?.slice(0, 10)}</td>
                 </tr>
               ))}
             </tbody>

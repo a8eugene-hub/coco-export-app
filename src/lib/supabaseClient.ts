@@ -1,4 +1,4 @@
-import { createBrowserClient, createServerClient } from "@supabase/ssr";
+import { createBrowserClient, createServerClient, type CookieOptions } from "@supabase/ssr";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -13,17 +13,19 @@ export function createClientBrowser() {
   return createBrowserClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 }
 
-export function createClientServer(cookies: any): SupabaseClient {
+export function createClientServer(
+  cookies: any,
+): SupabaseClient {
   return createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     cookies,
   });
 }
 
 export function createServiceClient(): SupabaseClient {
-  // 本来は service_role を使うべきだが、
-  // Vercel などで設定していない場合でも動くように anon key をフォールバックとして利用する。
-  const key = SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY;
-  return createClient(SUPABASE_URL, key, {
+  if (!SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY が設定されていません。.env.local を確認してください。");
+  }
+  return createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
