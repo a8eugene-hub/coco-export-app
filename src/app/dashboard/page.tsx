@@ -1,38 +1,41 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { createClientServer } from "@/lib/supabaseClient";
+import { createClientServer, createServiceClient } from "@/lib/supabaseClient";
 import { Card, SectionTitle, StatusBadge } from "@/components/ui";
 import { SeedButton } from "@/components/seed-button";
 
 export default async function DashboardPage() {
   const cookieStore = await cookies();
-  const supabase = createClientServer(cookieStore as any);
+  const authClient = createClientServer(cookieStore as any);
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await authClient.auth.getUser();
 
   if (!user) {
     redirect("/login");
   }
 
+  const dataClient = process.env.SUPABASE_SERVICE_ROLE_KEY
+    ? createServiceClient()
+    : authClient;
   const today = new Date().toISOString().slice(0, 10);
 
   const [{ data: delayedTasks }, { data: upcomingShipments }, { data: recentOrders }] = await Promise.all([
-    supabase
+    dataClient
       .from("tasks")
       .select("*, orders(order_no), shipments(bl_no)")
       .lt("planned_date", today)
       .is("completed_date", null)
       .order("planned_date", { ascending: true })
       .limit(10),
-    supabase
+    dataClient
       .from("shipments")
       .select("*")
       .gte("etd", today)
       .lte("etd", addDays(today, 7))
       .order("etd", { ascending: true }),
-    supabase
+    dataClient
       .from("orders")
       .select("*")
       .order("updated_at", { ascending: false })

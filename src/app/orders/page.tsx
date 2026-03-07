@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { createClientServer } from "@/lib/supabaseClient";
+import { createClientServer, createServiceClient } from "@/lib/supabaseClient";
 import { Card, SectionTitle, StatusBadge } from "@/components/ui";
 
 type PaymentRow = {
@@ -10,16 +10,20 @@ type PaymentRow = {
 
 export default async function OrdersPage() {
   const cookieStore = await cookies();
-  const supabase = createClientServer(cookieStore as any);
+  const authClient = createClientServer(cookieStore as any);
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await authClient.auth.getUser();
 
   if (!user) {
     redirect("/login");
   }
 
-  const { data: orders } = await supabase
+  // 一覧取得は SERVICE_ROLE があればそれで（デモデータと同一の権限で表示）
+  const dataClient = process.env.SUPABASE_SERVICE_ROLE_KEY
+    ? createServiceClient()
+    : authClient;
+  const { data: orders } = await dataClient
     .from("orders")
     .select("*, customers(name), payments(payment_type,status)")
     .order("created_at", { ascending: false })
