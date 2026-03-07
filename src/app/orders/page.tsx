@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClientServer, createServiceClient } from "@/lib/supabaseClient";
@@ -58,6 +59,12 @@ export default async function OrdersPage({ searchParams }: PageProps) {
           <h1 className="text-xl font-semibold text-slate-900">注文一覧</h1>
           <p className="text-sm text-slate-600">Order / Payment1 / Payment2 のステータスを一覧します。</p>
         </div>
+        <Link
+          href="/orders/new"
+          className="inline-flex items-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-slate-800"
+        >
+          新規注文
+        </Link>
       </header>
 
       <OrdersFilter initialQ={q} initialFrom={from} initialTo={to} />
