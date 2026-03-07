@@ -33,9 +33,10 @@ export async function POST() {
     customer = inserted;
   }
 
-  // 2) order (+ auto tasks/payments via same logic as /api/orders would do)
+  // 2) order（order_no は1日1種だと重複するため、実行ごとに一意な suffix を付与）
   const now = new Date();
-  const orderNo = `CO/AR-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const suffix = Date.now().toString(36).slice(-6);
+  const orderNo = `CO/AR-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}-${suffix}`;
 
   const { data: order, error: oErr } = await supabase
     .from("orders")
@@ -52,7 +53,8 @@ export async function POST() {
     .single();
   if (oErr || !order) {
     console.error("seed order error", oErr);
-    return NextResponse.json({ error: "seed failed (order)" }, { status: 500 });
+    const msg = oErr?.code === "23505" ? "注文番号が重複しています。しばらく待って再度お試しください。" : "注文の作成に失敗しました。";
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 
   // 3) create tasks (order scope)
