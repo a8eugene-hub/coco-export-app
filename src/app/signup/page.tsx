@@ -23,7 +23,12 @@ export default function SignupPage() {
         options: { emailRedirectTo: `${typeof window !== "undefined" ? window.location.origin : ""}/login` },
       });
       if (signUpError) {
-        setError(signUpError.message);
+        const msg = signUpError.message.toLowerCase();
+        if (msg.includes("rate limit") || msg.includes("email rate limit") || signUpError.message.includes("レート制限")) {
+          setError("送信回数が上限に達しました。しばらく（目安：1時間）待ってから再度お試しください。");
+        } else {
+          setError(signUpError.message);
+        }
         return;
       }
       setSuccess(true);
