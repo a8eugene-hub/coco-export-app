@@ -28,6 +28,7 @@ import { createClientServer } from "@/lib/supabaseClient";
 import { Card, ProgressBar, SectionTitle, StatusBadge } from "@/components/ui";
 import { PaymentWidget } from "@/components/payment-widget";
 import { TaskDateEdit } from "@/components/task-date-edit";
+import { ShipmentEditForm } from "@/components/shipment-edit-form";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -54,13 +55,23 @@ export default async function ShipmentDetailPage({ params }: Params) {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-5xl flex-col gap-4 px-4 py-6">
-      <header>
-        <h1 className="text-xl font-semibold text-slate-900">
-          Shipment {shipment.bl_no || "BL未確定"} ({shipment.orders?.order_no})
-        </h1>
-        <p className="text-sm text-slate-600">
-          ETD {shipment.etd} / ETA {shipment.eta} / {shipment.container_count} x {shipment.container_type}
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-slate-900">
+            Shipment {shipment.bl_no || "BL未確定"} ({shipment.orders?.order_no})
+          </h1>
+          <p className="text-sm text-slate-600">
+            ETD {shipment.etd ?? "-"} / ETA {shipment.eta ?? "-"} / {shipment.container_count} x {shipment.container_type}
+          </p>
+        </div>
+        <ShipmentEditForm
+          shipmentId={shipment.id}
+          initial={{
+            bl_no: shipment.bl_no ?? "",
+            etd: shipment.etd ?? "",
+            eta: shipment.eta ?? "",
+          }}
+        />
       </header>
 
       <div className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">

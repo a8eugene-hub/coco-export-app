@@ -31,12 +31,14 @@ type OrderDetail = {
   payments: Payment[];
   tasks: OrderTask[];
 };
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClientServer } from "@/lib/supabaseClient";
 import { Card, ProgressBar, SectionTitle, StatusBadge } from "@/components/ui";
 import { PaymentWidget } from "@/components/payment-widget";
 import { ShipmentAddForm } from "@/components/shipment-add-form";
 import { TaskDateEdit } from "@/components/task-date-edit";
+import { OrderDeleteButton } from "@/components/order-delete-button";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -69,12 +71,21 @@ export default async function OrderDetailPage({ params }: Params) {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-4 px-4 py-6">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold text-slate-900">Order {order.order_no}</h1>
           <p className="text-sm text-slate-600">
             顧客: {order.customers?.name} / 目的地: {order.destination} / Incoterms: {order.incoterms}
           </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/orders/${order.id}/edit`}
+            className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            編集
+          </Link>
+          <OrderDeleteButton orderId={order.id} orderNo={order.order_no} />
         </div>
       </header>
 

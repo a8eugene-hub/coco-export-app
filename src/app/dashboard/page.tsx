@@ -88,16 +88,24 @@ export default async function DashboardPage() {
         </Card>
 
         <Card>
-          <SectionTitle>今週ETD</SectionTitle>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <SectionTitle>今週ETD</SectionTitle>
+            <Link
+              href="/shipments"
+              className="text-xs font-medium text-slate-600 hover:text-slate-900 hover:underline"
+            >
+              Shipment一覧へ →
+            </Link>
+          </div>
           <p className="mt-1 text-xs text-slate-500">今週出港予定の Shipment。</p>
           <ul className="mt-3 space-y-2 text-xs">
             {upcoming.length === 0 && <li className="text-slate-500">今週ETDのShipmentはありません。</li>}
             {upcoming.map((s) => (
               <li key={s.id} className="rounded-lg border border-slate-100 p-2">
                 <div className="flex items-center justify-between gap-2">
-                  <a href={`/shipments/${s.id}`} className="font-medium text-slate-800 hover:underline">
+                  <Link href={`/shipments/${s.id}`} className="font-medium text-slate-800 hover:underline">
                     {s.bl_no || "BL未確定"}
-                  </a>
+                  </Link>
                   <span>{s.etd}</span>
                 </div>
                 <div className="mt-1 text-[11px] text-slate-500">
