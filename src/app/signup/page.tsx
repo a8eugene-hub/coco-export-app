@@ -25,7 +25,7 @@ export default function SignupPage() {
       if (signUpError) {
         const msg = signUpError.message.toLowerCase();
         if (msg.includes("rate limit") || msg.includes("email rate limit") || signUpError.message.includes("レート制限")) {
-          setError("送信回数が上限に達しました。しばらく（目安：1時間）待ってから再度お試しください。");
+          setError("送信回数が上限に達しました。この制限は「このメールだけ」ではなく、アプリ全体にかかります。しばらく（目安：1時間）待ってから、同じメールアドレスで再度「登録する」を押してください。");
         } else {
           setError(signUpError.message);
         }
@@ -61,6 +61,7 @@ export default function SignupPage() {
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm">
         <h1 className="text-xl font-semibold tracking-tight text-slate-900">新規登録</h1>
         <p className="mt-2 text-sm text-slate-600">メールアドレスとパスワードを設定してアカウントを作成します。</p>
+        <p className="mt-1 text-xs text-slate-500">※ パスワードリセットなどでメールを多く送っていると、一時的に送信上限となり登録できない場合があります。その場合は1時間ほど待ってから再度お試しください。</p>
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-700">

@@ -22,7 +22,7 @@ export default function ForgotPasswordPage() {
       if (resetError) {
         const msg = resetError.message.toLowerCase();
         if (msg.includes("rate limit") || msg.includes("email rate limit")) {
-          setError("送信回数が上限に達しました。しばらく（目安：1時間）待ってから再度お試しください。");
+          setError("送信回数が上限に達しました。この制限はアプリ全体にかかります。しばらく（目安：1時間）待ってから再度お試しください。");
         } else if (msg.includes("user not found") || msg.includes("invalid") && msg.includes("email")) {
           setError("このメールアドレスは登録されていません。入力内容をご確認ください。");
         } else if (msg.includes("email not confirmed")) {

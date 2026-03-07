@@ -10,6 +10,8 @@ export function ShipmentAddForm({ orderId }: { orderId: string }) {
   const [blNo, setBlNo] = useState("");
   const [etd, setEtd] = useState("");
   const [eta, setEta] = useState("");
+  const [vesselName, setVesselName] = useState("");
+  const [voyageNo, setVoyageNo] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,6 +27,8 @@ export function ShipmentAddForm({ orderId }: { orderId: string }) {
           bl_no: blNo || null,
           etd: etd || null,
           eta: eta || null,
+          vessel_name: vesselName || null,
+          voyage_no: voyageNo || null,
         }),
       });
       const json = await res.json();
@@ -35,6 +39,8 @@ export function ShipmentAddForm({ orderId }: { orderId: string }) {
       setBlNo("");
       setEtd("");
       setEta("");
+      setVesselName("");
+      setVoyageNo("");
       setOpen(false);
       router.refresh();
     } catch (err) {
@@ -60,6 +66,8 @@ export function ShipmentAddForm({ orderId }: { orderId: string }) {
         <Input label="B/L No" value={blNo} onChange={setBlNo} placeholder="例: BL-001" />
         <Input label="ETD" value={etd} onChange={setEtd} type="date" placeholder="出港予定日" />
         <Input label="ETA" value={eta} onChange={setEta} type="date" placeholder="到着予定日" />
+        <Input label="船名" value={vesselName} onChange={setVesselName} placeholder="例: EVER GIVEN" />
+        <Input label="Voyage No" value={voyageNo} onChange={setVoyageNo} placeholder="例: 012E" />
         {error && <p className="text-xs text-rose-600">{error}</p>}
         <div className="flex gap-2">
           <Button type="submit" disabled={loading}>
