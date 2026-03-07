@@ -14,6 +14,7 @@ type ShipmentPayments = {
 
 type ShipmentDetail = {
   id: string;
+  order_id: string;
   bl_no: string | null;
   etd: string | null;
   eta: string | null;
@@ -29,6 +30,8 @@ import { Card, ProgressBar, SectionTitle, StatusBadge } from "@/components/ui";
 import { PaymentWidget } from "@/components/payment-widget";
 import { TaskDateEdit } from "@/components/task-date-edit";
 import { ShipmentEditForm } from "@/components/shipment-edit-form";
+import { ShipmentContainers } from "@/components/shipment-containers";
+import { DocumentList } from "@/components/document-list";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -70,11 +73,14 @@ export default async function ShipmentDetailPage({ params }: Params) {
             bl_no: shipment.bl_no ?? "",
             etd: shipment.etd ?? "",
             eta: shipment.eta ?? "",
+            vessel_name: (shipment as { vessel_name?: string }).vessel_name ?? "",
+            voyage_no: (shipment as { voyage_no?: string }).voyage_no ?? "",
           }}
         />
       </header>
 
       <div className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <div className="space-y-4">
         <Card>
           <SectionTitle>Shipment工程（5-10）</SectionTitle>
           <div className="mt-2">
@@ -87,6 +93,8 @@ export default async function ShipmentDetailPage({ params }: Params) {
             tasks={tasks.map((t) => ({ ...t, scope: "SHIPMENT" }))}
           />
         </Card>
+        <ShipmentContainers shipmentId={shipment.id} />
+        </div>
 
         <Card>
           <SectionTitle>Shipment回収分 Payment</SectionTitle>
@@ -97,6 +105,7 @@ export default async function ShipmentDetailPage({ params }: Params) {
             <PaymentWidget paymentIds={paymentIds} />
           </div>
         </Card>
+        <DocumentList scope="SHIPMENT" orderId={shipment.order_id} shipmentId={shipment.id} title="Shipment ドキュメント" />
       </div>
     </div>
   );

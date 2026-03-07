@@ -2,13 +2,16 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClientServer, createServiceClient } from "@/lib/supabaseClient";
 import { Card, SectionTitle, StatusBadge } from "@/components/ui";
+import { OrdersFilter } from "@/components/orders-filter";
 
 type PaymentRow = {
   payment_type: "PAYMENT1" | "PAYMENT2";
   status: "UNPAID" | "PARTIAL" | "PAID";
 };
 
-export default async function OrdersPage() {
+type PageProps = { searchParams: Promise<{ q?: string; from?: string; to?: string }> };
+
+export default async function OrdersPage({ searchParams }: PageProps) {
   const cookieStore = await cookies();
   const authClient = createClientServer(cookieStore as any);
   const {
@@ -19,15 +22,26 @@ export default async function OrdersPage() {
     redirect("/login");
   }
 
-  // 一覧取得は SERVICE_ROLE があればそれで（デモデータと同一の権限で表示）
+  const params = await searchParams;
+  const q = (params.q ?? "").trim();
+  const from = params.from ?? "";
+  const to = params.to ?? "";
+
   const dataClient = process.env.SUPABASE_SERVICE_ROLE_KEY
     ? createServiceClient()
     : authClient;
-  const { data: orders } = await dataClient
+  let query = dataClient
     .from("orders")
     .select("*, customers(name), payments(payment_type,status)")
     .order("created_at", { ascending: false })
-    .limit(50);
+    .limit(100);
+  if (q) {
+    query = query.or(`order_no.ilike.%${q}%,proforma_no.ilike.%${q}%,destination.ilike.%${q}%`);
+  }
+  if (from) query = query.gte("order_date", from);
+  if (to) query = query.lte("order_date", to);
+
+  const { data: orders } = await query;
 
   const rows =
     orders?.map((o) => {
@@ -39,12 +53,14 @@ export default async function OrdersPage() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-4 px-4 py-6">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold text-slate-900">注文一覧</h1>
           <p className="text-sm text-slate-600">Order / Payment1 / Payment2 のステータスを一覧します。</p>
         </div>
       </header>
+
+      <OrdersFilter initialQ={q} initialFrom={from} initialTo={to} />
 
       <Card>
         <SectionTitle>Orders</SectionTitle>

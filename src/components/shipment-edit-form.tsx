@@ -6,7 +6,7 @@ import { Button, Card, Input, SectionTitle } from "@/components/ui";
 
 type Props = {
   shipmentId: string;
-  initial: { bl_no: string; etd: string; eta: string };
+  initial: { bl_no: string; etd: string; eta: string; vessel_name: string; voyage_no: string };
 };
 
 export function ShipmentEditForm({ shipmentId, initial }: Props) {
@@ -15,6 +15,8 @@ export function ShipmentEditForm({ shipmentId, initial }: Props) {
   const [blNo, setBlNo] = useState(initial.bl_no ?? "");
   const [etd, setEtd] = useState(initial.etd?.slice(0, 10) ?? "");
   const [eta, setEta] = useState(initial.eta?.slice(0, 10) ?? "");
+  const [vesselName, setVesselName] = useState(initial.vessel_name ?? "");
+  const [voyageNo, setVoyageNo] = useState(initial.voyage_no ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,6 +32,8 @@ export function ShipmentEditForm({ shipmentId, initial }: Props) {
           bl_no: blNo || null,
           etd: etd || null,
           eta: eta || null,
+          vessel_name: vesselName || null,
+          voyage_no: voyageNo || null,
         }),
       });
       const json = await res.json();
@@ -60,6 +64,8 @@ export function ShipmentEditForm({ shipmentId, initial }: Props) {
       <SectionTitle>B/L・ETD/ETA を編集</SectionTitle>
       <form onSubmit={submit} className="mt-3 space-y-3">
         <Input label="B/L No" value={blNo} onChange={setBlNo} placeholder="例: BL-001" />
+        <Input label="船名" value={vesselName} onChange={setVesselName} placeholder="例: DEMO VESSEL" />
+        <Input label="Voyage No" value={voyageNo} onChange={setVoyageNo} placeholder="例: V001" />
         <Input label="ETD" value={etd} onChange={setEtd} type="date" />
         <Input label="ETA" value={eta} onChange={setEta} type="date" />
         {error && <p className="text-xs text-rose-600">{error}</p>}

@@ -8,6 +8,7 @@ type Props = {
   orderId: string;
   orderNo: string;
   initial: {
+    proforma_no: string;
     destination: string;
     incoterms: string;
     currency: string;
@@ -18,6 +19,7 @@ type Props = {
 
 export function OrderEditForm({ orderId, orderNo, initial }: Props) {
   const router = useRouter();
+  const [proformaNo, setProformaNo] = useState(initial.proforma_no ?? "");
   const [destination, setDestination] = useState(initial.destination ?? "");
   const [incoterms, setIncoterms] = useState(initial.incoterms ?? "");
   const [currency, setCurrency] = useState(initial.currency ?? "USD");
@@ -35,6 +37,7 @@ export function OrderEditForm({ orderId, orderNo, initial }: Props) {
         method: "PATCH",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
+          proforma_no: proformaNo || null,
           destination: destination || null,
           incoterms: incoterms || null,
           currency: currency || "USD",
@@ -63,6 +66,7 @@ export function OrderEditForm({ orderId, orderNo, initial }: Props) {
       <p className="mt-1 text-xs text-slate-500">Order No: {orderNo}（変更不可）</p>
       <form onSubmit={submit} className="mt-4 space-y-3">
         <Input label="発注日" value={orderDate} onChange={setOrderDate} type="date" />
+        <Input label="プロフォーマ番号" value={proformaNo} onChange={setProformaNo} placeholder="例: PF-2024-001" />
         <Input label="目的地" value={destination} onChange={setDestination} placeholder="例: YOKOHAMA" />
         <Input label="Incoterms" value={incoterms} onChange={setIncoterms} placeholder="例: CIF Yokohama" />
         <Input label="通貨" value={currency} onChange={setCurrency} placeholder="USD" />

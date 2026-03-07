@@ -24,6 +24,7 @@ type Payment = {
 type OrderDetail = {
   id: string;
   order_no: string;
+  proforma_no: string | null;
   destination: string | null;
   incoterms: string | null;
   customers: { name: string | null } | null;
@@ -39,6 +40,7 @@ import { PaymentWidget } from "@/components/payment-widget";
 import { ShipmentAddForm } from "@/components/shipment-add-form";
 import { TaskDateEdit } from "@/components/task-date-edit";
 import { OrderDeleteButton } from "@/components/order-delete-button";
+import { DocumentList } from "@/components/document-list";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -75,7 +77,10 @@ export default async function OrderDetailPage({ params }: Params) {
         <div>
           <h1 className="text-xl font-semibold text-slate-900">Order {order.order_no}</h1>
           <p className="text-sm text-slate-600">
-            顧客: {order.customers?.name} / 目的地: {order.destination} / Incoterms: {order.incoterms}
+            顧客: {order.customers?.name}
+            {order.proforma_no && ` / Proforma: ${order.proforma_no}`}
+            {order.destination && ` / 目的地: ${order.destination}`}
+            {order.incoterms && ` / Incoterms: ${order.incoterms}`}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -138,6 +143,7 @@ export default async function OrderDetailPage({ params }: Params) {
               <PaymentWidget paymentIds={paymentIds} />
             </div>
           </Card>
+          <DocumentList scope="ORDER" orderId={order.id} title="Order ドキュメント" />
         </div>
       </div>
     </div>

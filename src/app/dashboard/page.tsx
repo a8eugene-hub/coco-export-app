@@ -5,7 +5,9 @@ import { createClientServer, createServiceClient } from "@/lib/supabaseClient";
 import { Card, SectionTitle, StatusBadge } from "@/components/ui";
 import { SeedButton } from "@/components/seed-button";
 
-export default async function DashboardPage() {
+type PageProps = { searchParams: Promise<{ delayed_filter?: string }> };
+
+export default async function DashboardPage({ searchParams }: PageProps) {
   const cookieStore = await cookies();
   const authClient = createClientServer(cookieStore as any);
   const {
@@ -20,15 +22,25 @@ export default async function DashboardPage() {
     ? createServiceClient()
     : authClient;
   const today = new Date().toISOString().slice(0, 10);
+  const delayedFilter = (await searchParams).delayed_filter ?? "overdue";
+  const weekStart = addDays(today, -6);
+
+  let delayedQuery = dataClient
+    .from("tasks")
+    .select("*, orders(order_no), shipments(bl_no)")
+    .is("completed_date", null)
+    .order("planned_date", { ascending: true })
+    .limit(50);
+  if (delayedFilter === "today") {
+    delayedQuery = delayedQuery.eq("planned_date", today);
+  } else if (delayedFilter === "week") {
+    delayedQuery = delayedQuery.gte("planned_date", weekStart).lte("planned_date", today);
+  } else {
+    delayedQuery = delayedQuery.lt("planned_date", today);
+  }
 
   const [{ data: delayedTasks }, { data: upcomingShipments }, { data: recentOrders }] = await Promise.all([
-    dataClient
-      .from("tasks")
-      .select("*, orders(order_no), shipments(bl_no)")
-      .lt("planned_date", today)
-      .is("completed_date", null)
-      .order("planned_date", { ascending: true })
-      .limit(10),
+    delayedQuery,
     dataClient
       .from("shipments")
       .select("*")
@@ -66,9 +78,16 @@ export default async function DashboardPage() {
 
       <main className="grid gap-4 md:grid-cols-3">
         <Card>
-          <SectionTitle>遅延タスク</SectionTitle>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <SectionTitle>遅延タスク</SectionTitle>
+            <div className="flex gap-1 text-[11px]">
+              <a href="?delayed_filter=overdue" className={`rounded px-2 py-1 ${delayedFilter === "overdue" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>期限超過</a>
+              <a href="?delayed_filter=week" className={`rounded px-2 py-1 ${delayedFilter === "week" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>今週</a>
+              <a href="?delayed_filter=today" className={`rounded px-2 py-1 ${delayedFilter === "today" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>今日</a>
+            </div>
+          </div>
           <p className="mt-1 text-xs text-slate-500">
-            planned_date &lt; 今日 かつ completed_date が未入力のタスク。
+            completed_date が未入力のタスク（フィルタで表示を切り替え）。
           </p>
           <ul className="mt-3 space-y-2">
             {delayed.length === 0 && <li className="text-xs text-slate-500">遅延タスクはありません。</li>}

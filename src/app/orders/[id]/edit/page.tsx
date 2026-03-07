@@ -18,7 +18,7 @@ export default async function OrderEditPage({ params }: Params) {
   const dataClient = process.env.SUPABASE_SERVICE_ROLE_KEY ? createServiceClient() : authClient;
   const { data: order } = await dataClient
     .from("orders")
-    .select("id, order_no, destination, incoterms, currency, notes, order_date")
+    .select("id, order_no, proforma_no, destination, incoterms, currency, notes, order_date")
     .eq("id", id)
     .single();
 
@@ -35,6 +35,7 @@ export default async function OrderEditPage({ params }: Params) {
         orderId={order.id}
         orderNo={order.order_no}
         initial={{
+          proforma_no: order.proforma_no ?? "",
           destination: order.destination ?? "",
           incoterms: order.incoterms ?? "",
           currency: order.currency ?? "USD",

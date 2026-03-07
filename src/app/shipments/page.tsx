@@ -3,8 +3,11 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClientServer, createServiceClient } from "@/lib/supabaseClient";
 import { Card, SectionTitle } from "@/components/ui";
+import { ShipmentsFilter } from "@/components/shipments-filter";
 
-export default async function ShipmentsPage() {
+type PageProps = { searchParams: Promise<{ etd_from?: string; etd_to?: string }> };
+
+export default async function ShipmentsPage({ searchParams }: PageProps) {
   const cookieStore = await cookies();
   const authClient = createClientServer(cookieStore as any);
   const {
@@ -12,12 +15,20 @@ export default async function ShipmentsPage() {
   } = await authClient.auth.getUser();
   if (!user) redirect("/login");
 
+  const params = await searchParams;
+  const etdFrom = params.etd_from ?? "";
+  const etdTo = params.etd_to ?? "";
+
   const dataClient = process.env.SUPABASE_SERVICE_ROLE_KEY ? createServiceClient() : authClient;
-  const { data: shipments } = await dataClient
+  let query = dataClient
     .from("shipments")
     .select("id, order_id, bl_no, etd, eta, container_type, container_count, orders(order_no)")
     .order("etd", { ascending: false })
     .limit(100);
+  if (etdFrom) query = query.gte("etd", etdFrom);
+  if (etdTo) query = query.lte("etd", etdTo);
+
+  const { data: shipments } = await query;
 
   const list = shipments ?? [];
 
@@ -35,6 +46,8 @@ export default async function ShipmentsPage() {
           ダッシュボードへ
         </Link>
       </header>
+
+      <ShipmentsFilter initialFrom={etdFrom} initialTo={etdTo} />
 
       <Card>
         <SectionTitle>Shipments</SectionTitle>
