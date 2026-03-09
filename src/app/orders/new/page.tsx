@@ -56,7 +56,6 @@ function NewOrderForm() {
   const [demurrageFreeDays, setDemurrageFreeDays] = useState("");
   const [requestedEta, setRequestedEta] = useState("");
   const [phytoInstructions, setPhytoInstructions] = useState("");
-  const [deliveryWish, setDeliveryWish] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [draftInfo, setDraftInfo] = useState<{ file_name: string; view_url: string | null } | null>(null);
@@ -81,6 +80,8 @@ function NewOrderForm() {
     setContainerType("40HC");
     setBalesPerContainer("675");
     setDemurrageFreeDays("14");
+    setIncoterms("CIF");
+    setUnitPrice("10.30");
     setPhytoInstructions(
       "Follow the agreed procedures and send the original so that it arrives at DIA by the port of entry. Also, be sure to send a copy of the original by email before sending it.\n合意された手続きに従い、植物検疫証明書の原本は入港港にてDIAへ提出できるよう送付してください。\nまた、原本を発送する前に、コピーを事前にメールで送付してください。"
     );
@@ -158,7 +159,6 @@ function NewOrderForm() {
           demurrage_free_days: demurrageFreeDays ? Number(demurrageFreeDays) : null,
           requested_eta: requestedEta || null,
           phyto_instructions: phytoInstructions || null,
-          notes: deliveryWish || null,
         }),
       });
       const json = await res.json();
@@ -266,23 +266,22 @@ function NewOrderForm() {
           <div className="grid gap-3">
             <div className="text-sm font-semibold text-slate-900">価格</div>
             <Input label="Price per Bale / ベール単価（USD）" value={unitPrice} onChange={setUnitPrice} type="number" step="0.01" placeholder="例: 10.30" />
-            <Input label="Incoterms / 取引条件" value={incoterms} onChange={setIncoterms} placeholder="例: CIF NAGOYA" />
+            <Input label="Incoterms / 取引条件" value={incoterms} onChange={setIncoterms} placeholder="例: CIF" />
           </div>
 
           <div className="grid gap-3">
             <div className="text-sm font-semibold text-slate-900">出荷条件</div>
             <Input label="Destination Port / 仕向港" value={destination} onChange={setDestination} placeholder="例: NAGOYA" />
-            <Input label="ETA / 到着予定" value={requestedEta} onChange={setRequestedEta} placeholder="例: Second week of April" />
-            <Input label="Demurrage Free Time / デマレージ無料期間（日）" value={demurrageFreeDays} onChange={setDemurrageFreeDays} type="number" placeholder="例: 14" />
             <div>
-              <label className="block text-xs font-medium text-slate-700">納品希望日</label>
+              <label className="block text-xs font-medium text-slate-700">ETA / 到着予定</label>
               <input
                 type="date"
-                value={deliveryWish}
-                onChange={(e) => setDeliveryWish(e.target.value)}
+                value={requestedEta}
+                onChange={(e) => setRequestedEta(e.target.value)}
                 className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
               />
             </div>
+            <Input label="Demurrage Free Time / デマレージ無料期間（日）" value={demurrageFreeDays} onChange={setDemurrageFreeDays} type="number" placeholder="例: 14" />
           </div>
 
           <div className="grid gap-3">
