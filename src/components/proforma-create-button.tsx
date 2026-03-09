@@ -16,6 +16,8 @@ type OrderForProforma = {
   currency: string | null;
   customers?: { name: string | null } | null;
   supplier?: string | null;
+  container_type?: string | null;
+  product_name?: string | null;
 };
 
 type ProformaForm = {
@@ -102,6 +104,8 @@ export function ProformaCreateButton({ orderId }: { orderId: string }) {
           currency: json.currency ?? null,
           customers: json.customers ?? null,
           supplier: json.supplier ?? null,
+          container_type: json.container_type ?? null,
+          product_name: json.product_name ?? null,
         };
         setOrder(minimal);
         setForm(buildInitialForm(minimal));
