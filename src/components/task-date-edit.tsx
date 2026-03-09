@@ -20,6 +20,23 @@ export function TaskDateEdit({ tasks }: { tasks: Task[] }) {
   const [completed, setCompleted] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const statusLabel = (status: string) => {
+    if (status === "COMPLETED" || status === "DONE") return "完了";
+    if (status === "IN_PROGRESS") return "進行中";
+    if (status === "NOT_STARTED") return "未着手";
+    return status;
+  };
+
+  const titleLabel = (title: string) => {
+    // 旧4工程の英語タイトルを日本語にマッピング
+    if (title === "Order received") return "注文受領";
+    if (title === "PO uploaded") return "注文書アップロード";
+    if (title === "AI extracted") return "AI取込";
+    if (title === "Order approved") return "注文承認";
+    // それ以外はそのまま（10ステップ用タイトルなど）
+    return title;
+  };
+
   function startEdit(t: Task) {
     setEditingId(t.id);
     setPlanned(t.planned_date ?? "");
@@ -59,8 +76,8 @@ export function TaskDateEdit({ tasks }: { tasks: Task[] }) {
         <li key={t.id} className="flex items-center justify-between rounded-lg border border-slate-100 p-2">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <span className="font-medium text-slate-900">{t.title}</span>
-              <StatusBadge label={t.status} tone={t.completed_date ? "green" : "gray"} />
+              <span className="font-medium text-slate-900">{titleLabel(t.title)}</span>
+              <StatusBadge label={statusLabel(t.status)} tone={t.completed_date ? "green" : "gray"} />
             </div>
             {editingId === t.id ? (
               <div className="mt-2 flex flex-wrap items-center gap-2">
