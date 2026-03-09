@@ -36,7 +36,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClientServer, createServiceClient } from "@/lib/supabaseClient";
 import { Card, ProgressBar, SectionTitle } from "@/components/ui";
-import { OrderToBLFlow } from "@/components/order-to-bl-flow";
 import { PaymentWidget } from "@/components/payment-widget";
 import { ShipmentAddForm } from "@/components/shipment-add-form";
 import { TaskDateEdit } from "@/components/task-date-edit";
@@ -101,9 +100,8 @@ export default async function OrderDetailPage({ params }: Params) {
 
       <div className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="space-y-4">
-          <OrderToBLFlow orderId={order.id} shipments={shipments} />
           <Card>
-            <SectionTitle>Order工程（1-4）</SectionTitle>
+            <SectionTitle>Order進捗（10ステップ）</SectionTitle>
             <TaskDateEdit tasks={orderTasks} />
           </Card>
 
