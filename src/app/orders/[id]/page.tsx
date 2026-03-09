@@ -42,6 +42,7 @@ import { ShipmentAddForm } from "@/components/shipment-add-form";
 import { TaskDateEdit } from "@/components/task-date-edit";
 import { OrderDeleteButton } from "@/components/order-delete-button";
 import { DocumentList } from "@/components/document-list";
+import { ProformaCreateButton } from "@/components/proforma-create-button";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -89,6 +90,7 @@ export default async function OrderDetailPage({ params }: Params) {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <ProformaCreateButton orderId={order.id} />
           <Link
             href={`/orders/${order.id}/edit`}
             className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
