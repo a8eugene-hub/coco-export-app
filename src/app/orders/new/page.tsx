@@ -274,7 +274,15 @@ function NewOrderForm() {
             <Input label="Destination Port / 仕向港" value={destination} onChange={setDestination} placeholder="例: NAGOYA" />
             <Input label="ETA / 到着予定" value={requestedEta} onChange={setRequestedEta} placeholder="例: Second week of April" />
             <Input label="Demurrage Free Time / デマレージ無料期間（日）" value={demurrageFreeDays} onChange={setDemurrageFreeDays} type="number" placeholder="例: 14" />
-            <Input label="納品希望日" value={deliveryWish} onChange={setDeliveryWish} placeholder="例: 2026/04/10 頃" />
+            <div>
+              <label className="block text-xs font-medium text-slate-700">納品希望日</label>
+              <input
+                type="date"
+                value={deliveryWish}
+                onChange={(e) => setDeliveryWish(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
+              />
+            </div>
           </div>
 
           <div className="grid gap-3">
