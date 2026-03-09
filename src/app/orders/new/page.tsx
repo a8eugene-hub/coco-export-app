@@ -69,6 +69,21 @@ function NewOrderForm() {
   }, []);
 
   useEffect(() => {
+    // よく使う値は初期値として入れておく（消せばplaceholderが例として見える）
+    setSupplier("ARAVA (PRIVATE) LTD");
+    setProductName("AGED 3mm Cocopeat");
+    setParticleSize("3mm");
+    setEcLevel("Below 0.3 mS/cm");
+    setRecoveryVolume("More than 160 Liters");
+    setWeightPerBale("28kg");
+    setMoistureLevel("50-60%");
+    setBagType("No Printed PP bag");
+    setContainerType("40HC");
+    setBalesPerContainer("675");
+    setDemurrageFreeDays("14");
+  }, []);
+
+  useEffect(() => {
     if (!draftId) return;
     fetch(`/api/orders/draft-uploads/${draftId}`)
       .then((r) => r.json())
