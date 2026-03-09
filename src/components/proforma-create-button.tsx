@@ -149,7 +149,7 @@ export function ProformaCreateButton({ orderId }: { orderId: string }) {
   return (
     <>
       <Button
-        variant="outline"
+        variant="ghost"
         onClick={openModal}
         className="border-slate-300 bg-white text-xs text-slate-700 hover:bg-slate-50"
       >
