@@ -146,7 +146,12 @@ export async function POST(req: NextRequest) {
 
   if (insertError || !order) {
     console.error("POST /api/orders insert error", insertError);
-    return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
+    // DB側の具体的なエラーメッセージも返すようにして原因を分かりやすくする
+    const message =
+      (insertError as any)?.message ||
+      (insertError as any)?.hint ||
+      "Failed to create order";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 
   const orderId = order.id as string;
