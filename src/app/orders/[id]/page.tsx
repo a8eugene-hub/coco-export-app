@@ -34,8 +34,8 @@ type OrderDetail = {
 };
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createClientServer } from "@/lib/supabaseClient";
-import { Card, ProgressBar, SectionTitle, StatusBadge } from "@/components/ui";
+import { createClientServer, createServiceClient } from "@/lib/supabaseClient";
+import { Card, ProgressBar, SectionTitle } from "@/components/ui";
 import { OrderToBLFlow } from "@/components/order-to-bl-flow";
 import { PaymentWidget } from "@/components/payment-widget";
 import { ShipmentAddForm } from "@/components/shipment-add-form";
@@ -48,13 +48,17 @@ type Params = { params: Promise<{ id: string }> };
 export default async function OrderDetailPage({ params }: Params) {
   const { id } = await params;
   const cookieStore = await cookies();
-  const supabase = createClientServer(cookieStore as any);
+  const supabase = createClientServer(cookieStore as { getAll: () => { name: string; value: string }[] });
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: order } = await fetchOrderWithRelations(supabase, id);
+  // 一覧と同様に、Service Role がある場合は service client を使って取得し、
+  // RLS 設定の影響で詳細が見られない問題を避ける
+  const dataClient = process.env.SUPABASE_SERVICE_ROLE_KEY ? createServiceClient() : supabase;
+
+  const { data: order } = await fetchOrderWithRelations(dataClient, id);
   if (!order) {
     redirect("/orders");
   }
