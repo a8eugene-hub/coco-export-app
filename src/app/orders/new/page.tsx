@@ -81,6 +81,9 @@ function NewOrderForm() {
     setContainerType("40HC");
     setBalesPerContainer("675");
     setDemurrageFreeDays("14");
+    setPhytoInstructions(
+      "Follow the agreed procedures and send the original so that it arrives at DIA by the port of entry. Also, be sure to send a copy of the original by email before sending it.\n合意された手続きに従い、植物検疫証明書の原本は入港港にてDIAへ提出できるよう送付してください。\nまた、原本を発送する前に、コピーを事前にメールで送付してください。"
+    );
   }, []);
 
   useEffect(() => {
@@ -283,7 +286,9 @@ function NewOrderForm() {
                 onChange={(e) => setPhytoInstructions(e.target.value)}
                 rows={3}
                 className="rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
-                placeholder="例: Original sent to DIA at port entry, copy emailed in advance"
+                placeholder={
+                  "例: Follow the agreed procedures and send the original so that it arrives at DIA by the port of entry. Also, be sure to send a copy of the original by email before sending it.\n合意された手続きに従い、植物検疫証明書の原本は入港港にてDIAへ提出できるよう送付してください。\nまた、原本を発送する前に、コピーを事前にメールで送付してください。"
+                }
               />
             </div>
           </div>
