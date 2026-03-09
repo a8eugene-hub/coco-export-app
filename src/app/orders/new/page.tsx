@@ -52,11 +52,11 @@ function NewOrderForm() {
   const [balesPerContainer, setBalesPerContainer] = useState("");
   const [containerType, setContainerType] = useState("");
   const [numberOfContainers, setNumberOfContainers] = useState("");
-  const [balesCount, setBalesCount] = useState("");
   const [unitPrice, setUnitPrice] = useState("");
   const [demurrageFreeDays, setDemurrageFreeDays] = useState("");
   const [requestedEta, setRequestedEta] = useState("");
   const [phytoInstructions, setPhytoInstructions] = useState("");
+  const [deliveryWish, setDeliveryWish] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [draftInfo, setDraftInfo] = useState<{ file_name: string; view_url: string | null } | null>(null);
@@ -73,9 +73,9 @@ function NewOrderForm() {
     setSupplier("ARAVA (PRIVATE) LTD");
     setProductName("AGED 3mm Cocopeat");
     setParticleSize("3mm");
-    setEcLevel("Below 0.3 mS/cm");
-    setRecoveryVolume("More than 160 Liters");
-    setWeightPerBale("28kg");
+    setEcLevel("must be under 0.3 mS/cm");
+    setRecoveryVolume("over 160 Liters");
+    setWeightPerBale("28kg~32kg");
     setMoistureLevel("50-60%");
     setBagType("No Printed PP bag");
     setContainerType("40HC");
@@ -104,7 +104,6 @@ function NewOrderForm() {
         if (ext.bales_per_container != null) setBalesPerContainer(String(ext.bales_per_container));
         if (ext.container_type) setContainerType(String(ext.container_type));
         if (ext.number_of_containers != null) setNumberOfContainers(String(ext.number_of_containers));
-        if (ext.bales_count != null) setBalesCount(String(ext.bales_count));
         if (ext.unit_price != null) setUnitPrice(String(ext.unit_price));
         if (ext.incoterms) setIncoterms(String(ext.incoterms));
         if (ext.destination) setDestination(String(ext.destination));
@@ -125,6 +124,10 @@ function NewOrderForm() {
     setMessage(null);
     try {
       const order_date = orderDate || new Date().toISOString().slice(0, 10);
+      const totalBales =
+        numberOfContainers && balesPerContainer
+          ? Number(numberOfContainers) * Number(balesPerContainer)
+          : null;
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -142,7 +145,7 @@ function NewOrderForm() {
           ec_level: ecLevel || null,
           recovery_volume: recoveryVolume || null,
           moisture_level: moistureLevel || null,
-          bales_count: balesCount ? Number(balesCount) : null,
+          bales_count: totalBales,
           weight_per_bale: weightPerBale || null,
           bag_type: bagType || null,
           bales_per_container: balesPerContainer || null,
@@ -152,6 +155,7 @@ function NewOrderForm() {
           demurrage_free_days: demurrageFreeDays ? Number(demurrageFreeDays) : null,
           requested_eta: requestedEta || null,
           phyto_instructions: phytoInstructions || null,
+          notes: deliveryWish || null,
         }),
       });
       const json = await res.json();
@@ -222,9 +226,9 @@ function NewOrderForm() {
             <div className="text-sm font-semibold text-slate-900">商品仕様</div>
             <Input label="Product Name / 商品名" value={productName} onChange={setProductName} placeholder="例: AGED 3mm Cocopeat" />
             <Input label="Particle Size / 粒子サイズ" value={particleSize} onChange={setParticleSize} placeholder="例: 3mm" />
-            <Input label="EC Level / EC値" value={ecLevel} onChange={setEcLevel} placeholder="例: Below 0.3 mS/cm" />
-            <Input label="Recovery Volume / 膨張容量" value={recoveryVolume} onChange={setRecoveryVolume} placeholder="例: More than 160 Liters" />
-            <Input label="Bale Weight / ベール重量" value={weightPerBale} onChange={setWeightPerBale} placeholder="例: 28kg" />
+            <Input label="EC Level / EC値" value={ecLevel} onChange={setEcLevel} placeholder="例: must be under 0.3 mS/cm" />
+            <Input label="Recovery Volume / 膨張容量" value={recoveryVolume} onChange={setRecoveryVolume} placeholder="例: over 160 Liters" />
+            <Input label="Bale Weight / ベール重量" value={weightPerBale} onChange={setWeightPerBale} placeholder="例: 28kg~32kg" />
             <Input label="Moisture Level / 水分率" value={moistureLevel} onChange={setMoistureLevel} placeholder="例: 50-60%" />
             <Input label="Bag Type / 袋仕様" value={bagType} onChange={setBagType} placeholder="例: No Printed PP bag" />
           </div>
@@ -234,7 +238,26 @@ function NewOrderForm() {
             <Input label="Container Type / コンテナタイプ" value={containerType} onChange={setContainerType} placeholder="例: 40HC" />
             <Input label="Number of Containers / コンテナ数" value={numberOfContainers} onChange={setNumberOfContainers} type="number" placeholder="例: 2" />
             <Input label="Bales per Container / コンテナあたりベール数" value={balesPerContainer} onChange={setBalesPerContainer} placeholder="例: 675" />
-            <Input label="Total Bales / 総ベール数" value={balesCount} onChange={setBalesCount} type="number" placeholder="例: 1350" />
+            {(() => {
+              const total =
+                numberOfContainers && balesPerContainer
+                  ? String(Number(numberOfContainers) * Number(balesPerContainer))
+                  : "";
+              return (
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-slate-700">Total Bales / 総ベール数</label>
+                  <input
+                    type="number"
+                    value={total}
+                    readOnly
+                    disabled
+                    placeholder="例: 1350"
+                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm bg-slate-50 text-slate-600"
+                  />
+                  <p className="text-[11px] text-slate-500">コンテナ数 × コンテナあたりベール数 から自動計算されます。</p>
+                </div>
+              );
+            })()}
           </div>
 
           <div className="grid gap-3">
@@ -248,6 +271,7 @@ function NewOrderForm() {
             <Input label="Destination Port / 仕向港" value={destination} onChange={setDestination} placeholder="例: NAGOYA" />
             <Input label="ETA / 到着予定" value={requestedEta} onChange={setRequestedEta} placeholder="例: Second week of April" />
             <Input label="Demurrage Free Time / デマレージ無料期間（日）" value={demurrageFreeDays} onChange={setDemurrageFreeDays} type="number" placeholder="例: 14" />
+            <Input label="納品希望日" value={deliveryWish} onChange={setDeliveryWish} placeholder="例: 2026/04/10 頃" />
           </div>
 
           <div className="grid gap-3">
