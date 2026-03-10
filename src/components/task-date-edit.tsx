@@ -38,8 +38,11 @@ export function TaskDateEdit({ tasks, paymentIds }: Props) {
   const [planned, setPlanned] = useState("");
   const [completed, setCompleted] = useState("");
   const [loading, setLoading] = useState(false);
-  const [paymentInfo, setPaymentInfo] = useState<LedgerResponse | null>(null);
-  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentLedgers, setPaymentLedgers] = useState<LedgerResponse[] | null>(null);
+  const [paymentAmounts, setPaymentAmounts] = useState<Record<"PAYMENT1" | "PAYMENT2", string>>({
+    PAYMENT1: "",
+    PAYMENT2: "",
+  });
 
   const statusLabel = (status: string) => {
     if (status === "COMPLETED" || status === "DONE") return "完了";
@@ -89,18 +92,24 @@ export function TaskDateEdit({ tasks, paymentIds }: Props) {
     return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
   });
 
-  async function maybeLoadPaymentInfo() {
-    if (!paymentIds || !paymentIds.length || paymentInfo) return;
+  async function maybeLoadPaymentLedgers() {
+    if (!paymentIds || !paymentIds.length || paymentLedgers) return;
     try {
       const res = await fetch(`/api/payments/ledger?ids=${paymentIds.join(",")}`);
       const json = (await res.json()) as LedgerResponse[];
-      const p1 = json.find((l) => l.payment.payment_type === "PAYMENT1");
-      if (p1) {
-        setPaymentInfo(p1);
-        if (!paymentAmount) {
-          setPaymentAmount(p1.latest_planned ? String(p1.latest_planned) : "");
+      setPaymentLedgers(json);
+      setPaymentAmounts((prev) => {
+        const next = { ...prev };
+        const p1 = json.find((l) => l.payment.payment_type === "PAYMENT1");
+        const p2 = json.find((l) => l.payment.payment_type === "PAYMENT2");
+        if (p1 && !next.PAYMENT1 && p1.latest_planned) {
+          next.PAYMENT1 = String(p1.latest_planned);
         }
-      }
+        if (p2 && !next.PAYMENT2 && p2.latest_planned) {
+          next.PAYMENT2 = String(p2.latest_planned);
+        }
+        return next;
+      });
     } catch {
       // 失敗してもタスク側の保存はできるようにする
     }
@@ -110,9 +119,20 @@ export function TaskDateEdit({ tasks, paymentIds }: Props) {
     setEditingId(t.id);
     setPlanned(t.planned_date ?? "");
     setCompleted(t.completed_date ?? "");
-    if (t.task_key === "PAYMENT_RECEIVED") {
-      await maybeLoadPaymentInfo();
+    if (t.task_key === "PAYMENT_RECEIVED" || t.task_key === "WPJ_FEE_PAID") {
+      await maybeLoadPaymentLedgers();
     }
+  }
+
+  function ledgerForTask(taskKey?: string) {
+    if (!paymentLedgers) return null;
+    if (taskKey === "PAYMENT_RECEIVED") {
+      return paymentLedgers.find((l) => l.payment.payment_type === "PAYMENT1") ?? null;
+    }
+    if (taskKey === "WPJ_FEE_PAID") {
+      return paymentLedgers.find((l) => l.payment.payment_type === "PAYMENT2") ?? null;
+    }
+    return null;
   }
 
   async function save() {
@@ -121,18 +141,24 @@ export function TaskDateEdit({ tasks, paymentIds }: Props) {
     try {
       const currentTask = visibleTasks.find((t) => t.id === editingId);
 
-      // 入金ステップのときは PAYMENT1 にも入金を記録する
-      if (currentTask?.task_key === "PAYMENT_RECEIVED" && paymentInfo && paymentAmount) {
-        const num = Number(paymentAmount);
+      // 入金ステップのときは対応する Payment にも入金を記録する
+      if (
+        (currentTask?.task_key === "PAYMENT_RECEIVED" || currentTask?.task_key === "WPJ_FEE_PAID") &&
+        paymentLedgers
+      ) {
+        const targetType = currentTask.task_key === "WPJ_FEE_PAID" ? "PAYMENT2" : "PAYMENT1";
+        const ledger = paymentLedgers.find((l) => l.payment.payment_type === targetType);
+        const rawAmount = paymentAmounts[targetType];
+        const num = Number(rawAmount);
         const paidDate = completed || planned || new Date().toISOString().slice(0, 10);
-        if (!isNaN(num) && num > 0) {
-          const resPay = await fetch(`/api/payments/${paymentInfo.payment.id}/transactions`, {
+        if (ledger && !isNaN(num) && num > 0) {
+          const resPay = await fetch(`/api/payments/${ledger.payment.id}/transactions`, {
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify({
               paid_date: paidDate,
               amount_paid: num,
-              currency: paymentInfo.payment.currency,
+              currency: ledger.payment.currency,
             }),
           });
           if (!resPay.ok) {
@@ -196,25 +222,37 @@ export function TaskDateEdit({ tasks, paymentIds }: Props) {
                     />
                   </label>
                 </div>
-                {t.task_key === "PAYMENT_RECEIVED" && paymentInfo && (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <label className="flex items-center gap-1">
-                      <span className="text-[11px] text-slate-500">
-                        入金金額 ({paymentInfo.payment.currency})
-                      </span>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={paymentAmount}
-                        onChange={(e) => setPaymentAmount(e.target.value)}
-                        className="w-32 rounded border border-slate-200 px-2 py-1 text-[11px]"
-                      />
-                    </label>
-                    <span className="text-[11px] text-slate-500">
-                      予定額: {paymentInfo.latest_planned.toLocaleString()} {paymentInfo.payment.currency}
-                    </span>
-                  </div>
+                {["PAYMENT_RECEIVED", "WPJ_FEE_PAID"].includes(t.task_key ?? "") && (
+                  (() => {
+                    const ledger = ledgerForTask(t.task_key);
+                    if (!ledger) return null;
+                    const type =
+                      t.task_key === "WPJ_FEE_PAID" ? ("PAYMENT2" as const) : ("PAYMENT1" as const);
+                    const labelPrefix =
+                      t.task_key === "WPJ_FEE_PAID" ? "WPJ報酬額" : "入金金額";
+                    return (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <label className="flex items-center gap-1">
+                          <span className="text-[11px] text-slate-500">
+                            {labelPrefix} ({ledger.payment.currency})
+                          </span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={paymentAmounts[type]}
+                            onChange={(e) =>
+                              setPaymentAmounts((prev) => ({ ...prev, [type]: e.target.value }))
+                            }
+                            className="w-32 rounded border border-slate-200 px-2 py-1 text-[11px]"
+                          />
+                        </label>
+                        <span className="text-[11px] text-slate-500">
+                          予定額: {ledger.latest_planned.toLocaleString()} {ledger.payment.currency}
+                        </span>
+                      </div>
+                    );
+                  })()
                 )}
                 <div className="flex flex-wrap items-center gap-2">
                   <Button type="button" onClick={save} disabled={loading}>
