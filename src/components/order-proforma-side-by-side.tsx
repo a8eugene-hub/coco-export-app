@@ -60,6 +60,7 @@ export function OrderProformaSideBySide({ orderId }: Props) {
     return (
       <div className="mt-2 text-[11px] text-slate-500">
         PROFORMAがアップロードされていないか、読み込みに失敗しました。
+        {error && <span className="ml-1 text-[10px] text-rose-500">({error})</span>}
       </div>
     );
   }

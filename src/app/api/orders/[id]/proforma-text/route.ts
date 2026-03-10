@@ -9,17 +9,22 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
   const supabase = createServiceClient();
 
   // Order に紐づく最新の PROFORMA ドキュメントを取得
-  const { data: doc, error: docError } = await supabase
+  const { data: docs, error: docError } = await supabase
     .from("documents")
     .select("id, storage_bucket, storage_path, file_name")
     .eq("scope", "ORDER")
     .eq("order_id", orderId)
     .eq("document_type", "PROFORMA")
     .order("uploaded_at", { ascending: false })
-    .limit(1)
-    .single();
+    .limit(1);
 
-  if (docError || !doc) {
+  if (docError) {
+    console.error("GET /api/orders/[id]/proforma-text query error", docError);
+    return NextResponse.json({ error: "PROFORMA document query failed" }, { status: 500 });
+  }
+
+  const doc = docs && docs.length > 0 ? docs[0] : null;
+  if (!doc) {
     return NextResponse.json({ error: "PROFORMA document not found" }, { status: 404 });
   }
 
