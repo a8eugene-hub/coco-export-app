@@ -44,11 +44,12 @@ export function TaskDateEdit({ tasks, paymentIds }: Props) {
     PAYMENT2: "",
   });
 
-  const statusLabel = (status: string) => {
-    if (status === "COMPLETED" || status === "DONE") return "完了";
-    if (status === "IN_PROGRESS") return "進行中";
-    if (status === "NOT_STARTED") return "未着手";
-    return status;
+  const statusLabel = (status: string | null | undefined) => {
+    const s = status || "NOT_STARTED";
+    if (s === "COMPLETED" || s === "DONE") return "完了";
+    if (s === "IN_PROGRESS") return "進行中";
+    if (s === "NOT_STARTED") return "未着手";
+    return s;
   };
 
   const titleLabel = (title: string) => {
@@ -143,6 +144,12 @@ export function TaskDateEdit({ tasks, paymentIds }: Props) {
     setLoading(true);
     try {
       const currentTask = visibleTasks.find((t) => t.id === editingId);
+      const nextStatus =
+        completed || currentTask?.completed_date
+          ? "COMPLETED"
+          : planned || currentTask?.planned_date
+            ? "IN_PROGRESS"
+            : "NOT_STARTED";
 
       // 入金ステップのときは対応する Payment にも入金を記録する
       if (
@@ -177,6 +184,7 @@ export function TaskDateEdit({ tasks, paymentIds }: Props) {
         body: JSON.stringify({
           planned_date: planned || null,
           completed_date: completed || null,
+          status: nextStatus,
         }),
       });
       if (!res.ok) {
@@ -201,7 +209,9 @@ export function TaskDateEdit({ tasks, paymentIds }: Props) {
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <span className="font-medium text-slate-900">{titleLabel(t.title)}</span>
-              <StatusBadge label={statusLabel(t.status)} tone={t.completed_date ? "green" : "gray"} />
+              <span className="text-[11px] text-slate-500">
+                （{statusLabel(t.status)}）
+              </span>
             </div>
             {editingId === t.id ? (
               <div className="mt-2 flex flex-col gap-2">

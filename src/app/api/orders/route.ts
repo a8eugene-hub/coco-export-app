@@ -179,6 +179,7 @@ export async function POST(req: NextRequest) {
   };
 
   const etaDate = parseDate(requested_eta ?? null);
+  const orderDateObj = parseDate(order.order_date ?? null);
 
   const taskInserts = ORDER_TASK_DEFS.map((def) => {
     const base: any = {
@@ -200,13 +201,16 @@ export async function POST(req: NextRequest) {
       };
     }
 
-    // ETA から逆算して予定日を設定（入金系は除く）
-    if (etaDate) {
+    // 予定日の自動設定
+    // - PROFORMA_ISSUED: 「注文書作成日 + 1日」
+    // - それ以外（入金系を除く）は ETA からの逆算
+    if (def.task_key === "PROFORMA_ISSUED") {
+      if (orderDateObj) {
+        base.planned_date = addDays(orderDateObj, 1);
+      }
+    } else if (etaDate) {
       let offsetDays: number | null = null;
       switch (def.task_key) {
-        case "PROFORMA_ISSUED":
-          offsetDays = -45;
-          break;
         case "PRODUCTION_INSTRUCTED":
           offsetDays = -40;
           break;
@@ -214,10 +218,10 @@ export async function POST(req: NextRequest) {
           offsetDays = -30;
           break;
         case "BL_ISSUED":
-          offsetDays = -10;
+          offsetDays = -25;
           break;
         case "DOCUMENTS_SENT":
-          offsetDays = -7;
+          offsetDays = -20;
           break;
         case "ARRIVED_JAPAN":
           offsetDays = 0;

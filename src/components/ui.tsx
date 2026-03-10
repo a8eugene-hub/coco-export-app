@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 export function StatusBadge({ label, tone }: { label: string; tone?: "gray" | "green" | "yellow" | "red" }) {
   const base =
-    "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset";
+    "inline-flex items-center justify-center rounded-full px-4 py-1.5 text-base font-semibold leading-none ring-1 ring-inset";
   const toneClass =
     tone === "green"
       ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
@@ -12,7 +12,9 @@ export function StatusBadge({ label, tone }: { label: string; tone?: "gray" | "g
           ? "bg-rose-50 text-rose-700 ring-rose-200"
           : "bg-slate-50 text-slate-700 ring-slate-200";
 
-  return <span className={`${base} ${toneClass}`}>{label}</span>;
+  const text = (label || "").trim() || "未着手";
+
+  return <span className={`${base} ${toneClass}`}>{text}</span>;
 }
 
 export function ProgressBar({ value }: { value: number }) {
