@@ -24,9 +24,26 @@ type Payment = {
 type OrderDetail = {
   id: string;
   order_no: string;
+  order_date: string | null;
   proforma_no: string | null;
   destination: string | null;
   incoterms: string | null;
+  supplier: string | null;
+  product_name: string | null;
+  particle_size: string | null;
+  ec_level: string | null;
+  recovery_volume: string | null;
+  weight_per_bale: string | null;
+  moisture_level: string | null;
+  bag_type: string | null;
+  container_type: string | null;
+  number_of_containers: number | null;
+  bales_per_container: string | null;
+  bales_count: number | null;
+  unit_price: number | null;
+  demurrage_free_days: number | null;
+  requested_eta: string | null;
+  phyto_instructions: string | null;
   customers: { name: string | null } | null;
   shipments: Shipment[];
   payments: Payment[];
@@ -68,6 +85,12 @@ export default async function OrderDetailPage({ params }: Params) {
   const payments = order.payments ?? [];
   const paymentIds = payments.map((p) => p.id);
 
+  const totalBales =
+    order.bales_count ??
+    (order.number_of_containers && order.bales_per_container
+      ? Number(order.number_of_containers) * Number(order.bales_per_container)
+      : null);
+
   const shipmentProgress = shipments.map((s) => {
     const tasksForShipment = shipmentTasks.filter((t) => t.shipment_id === s.id);
     const completed = tasksForShipment.filter((t) => t.completed_date).length;
@@ -100,6 +123,58 @@ export default async function OrderDetailPage({ params }: Params) {
 
       <div className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="space-y-4">
+          <Card>
+            <SectionTitle>注文内容</SectionTitle>
+            <div className="mt-3 grid gap-4 text-xs text-slate-700">
+              <div className="space-y-1">
+                <div className="font-semibold text-slate-900">基本情報</div>
+                <p>Order Date / 注文日: {order.order_date?.slice(0, 10) ?? "-"}</p>
+                <p>Buyer / 買主: {order.customers?.name ?? "-"}</p>
+                <p>Supplier / 供給者（売主）: {order.supplier ?? "-"}</p>
+              </div>
+              <div className="space-y-1">
+                <div className="font-semibold text-slate-900">商品仕様</div>
+                <p>Product Name / 商品名: {order.product_name ?? "-"}</p>
+                <p>Particle Size / 粒子サイズ: {order.particle_size ?? "-"}</p>
+                <p>EC Level / EC値: {order.ec_level ?? "-"}</p>
+                <p>Recovery Volume / 膨張容量: {order.recovery_volume ?? "-"}</p>
+                <p>Bale Weight / ベール重量: {order.weight_per_bale ?? "-"}</p>
+                <p>Moisture Level / 水分率: {order.moisture_level ?? "-"}</p>
+                <p>Bag Type / 袋仕様: {order.bag_type ?? "-"}</p>
+              </div>
+              <div className="space-y-1">
+                <div className="font-semibold text-slate-900">数量</div>
+                <p>Container Type / コンテナタイプ: {order.container_type ?? "-"}</p>
+                <p>Number of Containers / コンテナ数: {order.number_of_containers ?? "-"}</p>
+                <p>Bales per Container / コンテナあたりベール数: {order.bales_per_container ?? "-"}</p>
+                <p>Total Bales / 総ベール数: {totalBales ?? "-"}</p>
+              </div>
+              <div className="space-y-1">
+                <div className="font-semibold text-slate-900">価格・条件</div>
+                <p>
+                  Price per Bale / ベール単価（USD）:{" "}
+                  {order.unit_price != null ? order.unit_price.toLocaleString() : "-"} USD
+                </p>
+                <p>Incoterms / 取引条件: {order.incoterms ?? "-"}</p>
+              </div>
+              <div className="space-y-1">
+                <div className="font-semibold text-slate-900">出荷条件</div>
+                <p>Destination Port / 仕向港: {order.destination ?? "-"}</p>
+                <p>ETA / 到着予定: {order.requested_eta?.slice(0, 10) ?? "-"}</p>
+                <p>
+                  Demurrage Free Time / デマレージ無料期間（日）:{" "}
+                  {order.demurrage_free_days ?? "-"}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <div className="font-semibold text-slate-900">必須書類</div>
+                <p className="whitespace-pre-wrap">
+                  Phytosanitary Certificate / 植物検疫証明書:{" "}
+                  {order.phyto_instructions ?? "-"}
+                </p>
+              </div>
+            </div>
+          </Card>
           <Card>
             <SectionTitle>Order進捗（10ステップ）</SectionTitle>
             <TaskDateEdit tasks={orderTasks} paymentIds={paymentIds} />
