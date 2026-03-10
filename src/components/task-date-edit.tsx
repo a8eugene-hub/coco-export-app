@@ -37,6 +37,18 @@ export function TaskDateEdit({ tasks }: { tasks: Task[] }) {
     return title;
   };
 
+  // 旧4工程（Order received / PO uploaded / AI extracted / Order approved）は
+  // 新しい10ステップとは別なので、一覧表示から除外する
+  const visibleTasks = tasks.filter(
+    (t) =>
+      ![
+        "Order received",
+        "PO uploaded",
+        "AI extracted",
+        "Order approved",
+      ].includes(t.title),
+  );
+
   function startEdit(t: Task) {
     setEditingId(t.id);
     setPlanned(t.planned_date ?? "");
@@ -72,7 +84,7 @@ export function TaskDateEdit({ tasks }: { tasks: Task[] }) {
 
   return (
     <ul className="mt-2 space-y-2 text-xs">
-      {tasks.map((t) => (
+      {visibleTasks.map((t) => (
         <li key={t.id} className="flex items-center justify-between rounded-lg border border-slate-100 p-2">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
