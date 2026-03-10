@@ -34,6 +34,9 @@ export function DocumentList({ scope, orderId, shipmentId, paymentId, title }: P
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [analyzingId, setAnalyzingId] = useState<string | null>(null);
+  const [analysisMessage, setAnalysisMessage] = useState<string | null>(null);
+  const [analysisIssues, setAnalysisIssues] = useState<string[] | null>(null);
 
   const query = new URLSearchParams({ scope, order_id: orderId });
   if (shipmentId) query.set("shipment_id", shipmentId);
@@ -80,6 +83,48 @@ export function DocumentList({ scope, orderId, shipmentId, paymentId, title }: P
     }
   }
 
+  async function handleDelete(id: string) {
+    if (!confirm("この書類を削除しますか？この操作は取り消せません。")) return;
+    setError(null);
+    try {
+      const res = await fetch(`/api/documents/${id}`, { method: "DELETE" });
+      const json = await res.json();
+      if (!res.ok) {
+        setError(json?.error ?? "削除に失敗しました");
+        return;
+      }
+      load();
+      router.refresh();
+    } catch {
+      setError("通信に失敗しました");
+    }
+  }
+
+  async function handleAnalyze(id: string, documentType: string) {
+    if (documentType !== "PROFORMA") {
+      setAnalysisMessage("AIチェックは Proforma 書類のみ対象です。");
+      setAnalysisIssues(null);
+      return;
+    }
+    setAnalyzingId(id);
+    setAnalysisMessage(null);
+    setAnalysisIssues(null);
+    try {
+      const res = await fetch(`/api/documents/${id}/analyze`, { method: "POST" });
+      const json = await res.json();
+      if (!res.ok) {
+        setAnalysisMessage(json?.error ?? "AIチェックに失敗しました");
+        return;
+      }
+      setAnalysisMessage(json.summary as string);
+      setAnalysisIssues(Array.isArray(json.issues) ? json.issues : null);
+    } catch {
+      setAnalysisMessage("AIチェックに失敗しました（通信エラー）");
+    } finally {
+      setAnalyzingId(null);
+    }
+  }
+
   return (
     <Card>
       <SectionTitle>{title ?? "ドキュメント"}</SectionTitle>
@@ -96,9 +141,15 @@ export function DocumentList({ scope, orderId, shipmentId, paymentId, title }: P
         <input
           type="file"
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          className="text-xs"
+          className="text-xs cursor-pointer"
         />
-        <Button type="submit" disabled={loading || !file}>{loading ? "送信中..." : "アップロード"}</Button>
+        <Button
+          type="submit"
+          disabled={loading || !file}
+          className="bg-sky-600 text-white hover:bg-sky-700"
+        >
+          {loading ? "送信中..." : "アップロード"}
+        </Button>
       </form>
       {error && <p className="mt-2 text-xs text-rose-600">{error}</p>}
       <ul className="mt-3 space-y-1 text-xs">
@@ -124,10 +175,39 @@ export function DocumentList({ scope, orderId, shipmentId, paymentId, title }: P
               >
                 ダウンロード
               </a>
+              <button
+                type="button"
+                onClick={() => handleDelete(d.id)}
+                className="text-rose-600 hover:underline"
+              >
+                削除
+              </button>
+              {d.document_type === "PROFORMA" && (
+                <button
+                  type="button"
+                  onClick={() => handleAnalyze(d.id, d.document_type)}
+                  className="text-sky-700 hover:underline"
+                  disabled={analyzingId === d.id}
+                >
+                  {analyzingId === d.id ? "AIチェック中..." : "AIチェック"}
+                </button>
+              )}
             </span>
           </li>
         ))}
       </ul>
+      {analysisMessage && (
+        <div className="mt-3 rounded-md bg-slate-50 p-2 text-[11px] text-slate-700">
+          <p>{analysisMessage}</p>
+          {analysisIssues && analysisIssues.length > 0 && (
+            <ul className="mt-1 list-disc pl-4">
+              {analysisIssues.map((m, idx) => (
+                <li key={idx}>{m}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </Card>
   );
 }
