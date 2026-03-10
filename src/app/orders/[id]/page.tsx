@@ -58,6 +58,7 @@ import { ShipmentAddForm } from "@/components/shipment-add-form";
 import { TaskDateEdit } from "@/components/task-date-edit";
 import { OrderDeleteButton } from "@/components/order-delete-button";
 import { DocumentList } from "@/components/document-list";
+import { OrderProformaSideBySide } from "@/components/order-proforma-side-by-side";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -174,6 +175,7 @@ export default async function OrderDetailPage({ params }: Params) {
                 </p>
               </div>
             </div>
+            <OrderProformaSideBySide orderId={order.id} />
           </Card>
           <Card>
             <SectionTitle>Order進捗（10ステップ）</SectionTitle>
