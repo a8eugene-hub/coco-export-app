@@ -102,7 +102,7 @@ export default async function OrderDetailPage({ params }: Params) {
         <div className="space-y-4">
           <Card>
             <SectionTitle>Order進捗（10ステップ）</SectionTitle>
-            <TaskDateEdit tasks={orderTasks} />
+            <TaskDateEdit tasks={orderTasks} paymentIds={paymentIds} />
           </Card>
 
           <Card>

@@ -105,10 +105,26 @@ export function DocumentList({ scope, orderId, shipmentId, paymentId, title }: P
         {docs.length === 0 && <li className="text-slate-500">書類がまだありません。</li>}
         {docs.map((d) => (
           <li key={d.id} className="flex items-center justify-between gap-2">
-            <span className="text-slate-700">{d.document_type}: {d.file_name}</span>
-            <a href={`/api/documents/${d.id}/download`} target="_blank" rel="noopener noreferrer" className="text-slate-600 hover:underline">
-              ダウンロード
-            </a>
+            <span className="text-slate-700">
+              {d.document_type}: {d.file_name}
+            </span>
+            <span className="flex gap-2">
+              <a
+                href={`/api/documents/${d.id}/download`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-slate-600 hover:underline"
+              >
+                表示
+              </a>
+              <a
+                href={`/api/documents/${d.id}/download`}
+                download={d.file_name}
+                className="text-slate-600 hover:underline"
+              >
+                ダウンロード
+              </a>
+            </span>
           </li>
         ))}
       </ul>

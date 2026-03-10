@@ -14,12 +14,32 @@ type Task = {
   completed_date: string | null;
 };
 
-export function TaskDateEdit({ tasks }: { tasks: Task[] }) {
+type Props = {
+  tasks: Task[];
+  paymentIds?: string[];
+};
+
+type LedgerResponse = {
+  payment: {
+    id: string;
+    payment_type: "PAYMENT1" | "PAYMENT2";
+    status: "UNPAID" | "PARTIAL" | "PAID";
+    currency: string;
+    due_date: string | null;
+  };
+  latest_planned: number;
+  paid_total: number;
+  status: "UNPAID" | "PARTIAL" | "PAID";
+};
+
+export function TaskDateEdit({ tasks, paymentIds }: Props) {
   const router = useRouter();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [planned, setPlanned] = useState("");
   const [completed, setCompleted] = useState("");
   const [loading, setLoading] = useState(false);
+  const [paymentInfo, setPaymentInfo] = useState<LedgerResponse | null>(null);
+  const [paymentAmount, setPaymentAmount] = useState("");
 
   const statusLabel = (status: string) => {
     if (status === "COMPLETED" || status === "DONE") return "完了";
@@ -69,16 +89,59 @@ export function TaskDateEdit({ tasks }: { tasks: Task[] }) {
     return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
   });
 
-  function startEdit(t: Task) {
+  async function maybeLoadPaymentInfo() {
+    if (!paymentIds || !paymentIds.length || paymentInfo) return;
+    try {
+      const res = await fetch(`/api/payments/ledger?ids=${paymentIds.join(",")}`);
+      const json = (await res.json()) as LedgerResponse[];
+      const p1 = json.find((l) => l.payment.payment_type === "PAYMENT1");
+      if (p1) {
+        setPaymentInfo(p1);
+        if (!paymentAmount) {
+          setPaymentAmount(p1.latest_planned ? String(p1.latest_planned) : "");
+        }
+      }
+    } catch {
+      // 失敗してもタスク側の保存はできるようにする
+    }
+  }
+
+  async function startEdit(t: Task) {
     setEditingId(t.id);
     setPlanned(t.planned_date ?? "");
     setCompleted(t.completed_date ?? "");
+    if (t.task_key === "PAYMENT_RECEIVED") {
+      await maybeLoadPaymentInfo();
+    }
   }
 
   async function save() {
     if (!editingId) return;
     setLoading(true);
     try {
+      const currentTask = visibleTasks.find((t) => t.id === editingId);
+
+      // 入金ステップのときは PAYMENT1 にも入金を記録する
+      if (currentTask?.task_key === "PAYMENT_RECEIVED" && paymentInfo && paymentAmount) {
+        const num = Number(paymentAmount);
+        const paidDate = completed || planned || new Date().toISOString().slice(0, 10);
+        if (!isNaN(num) && num > 0) {
+          const resPay = await fetch(`/api/payments/${paymentInfo.payment.id}/transactions`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              paid_date: paidDate,
+              amount_paid: num,
+              currency: paymentInfo.payment.currency,
+            }),
+          });
+          if (!resPay.ok) {
+            const j = await resPay.json();
+            alert(j?.error ?? "入金の記録に失敗しました");
+          }
+        }
+      }
+
       const res = await fetch(`/api/tasks/${editingId}`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
@@ -112,31 +175,55 @@ export function TaskDateEdit({ tasks }: { tasks: Task[] }) {
               <StatusBadge label={statusLabel(t.status)} tone={t.completed_date ? "green" : "gray"} />
             </div>
             {editingId === t.id ? (
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <label className="flex items-center gap-1">
-                  <span className="text-[11px] text-slate-500">予定:</span>
-                  <input
-                    type="date"
-                    value={planned}
-                    onChange={(e) => setPlanned(e.target.value)}
-                    className="rounded border border-slate-200 px-2 py-1 text-[11px]"
-                  />
-                </label>
-                <label className="flex items-center gap-1">
-                  <span className="text-[11px] text-slate-500">完了:</span>
-                  <input
-                    type="date"
-                    value={completed}
-                    onChange={(e) => setCompleted(e.target.value)}
-                    className="rounded border border-slate-200 px-2 py-1 text-[11px]"
-                  />
-                </label>
-                <Button type="button" onClick={save} disabled={loading}>
-                  {loading ? "保存中..." : "保存"}
-                </Button>
-                <Button type="button" variant="ghost" onClick={() => setEditingId(null)} disabled={loading}>
-                  キャンセル
-                </Button>
+              <div className="mt-2 flex flex-col gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <label className="flex items-center gap-1">
+                    <span className="text-[11px] text-slate-500">予定:</span>
+                    <input
+                      type="date"
+                      value={planned}
+                      onChange={(e) => setPlanned(e.target.value)}
+                      className="rounded border border-slate-200 px-2 py-1 text-[11px]"
+                    />
+                  </label>
+                  <label className="flex items-center gap-1">
+                    <span className="text-[11px] text-slate-500">完了:</span>
+                    <input
+                      type="date"
+                      value={completed}
+                      onChange={(e) => setCompleted(e.target.value)}
+                      className="rounded border border-slate-200 px-2 py-1 text-[11px]"
+                    />
+                  </label>
+                </div>
+                {t.task_key === "PAYMENT_RECEIVED" && paymentInfo && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <label className="flex items-center gap-1">
+                      <span className="text-[11px] text-slate-500">
+                        入金金額 ({paymentInfo.payment.currency})
+                      </span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={paymentAmount}
+                        onChange={(e) => setPaymentAmount(e.target.value)}
+                        className="w-32 rounded border border-slate-200 px-2 py-1 text-[11px]"
+                      />
+                    </label>
+                    <span className="text-[11px] text-slate-500">
+                      予定額: {paymentInfo.latest_planned.toLocaleString()} {paymentInfo.payment.currency}
+                    </span>
+                  </div>
+                )}
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button type="button" onClick={save} disabled={loading}>
+                    {loading ? "保存中..." : "保存"}
+                  </Button>
+                  <Button type="button" variant="ghost" onClick={() => setEditingId(null)} disabled={loading}>
+                    キャンセル
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-500">
