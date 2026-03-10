@@ -31,7 +31,28 @@ export async function GET(req: NextRequest) {
       if (!payment) return null;
 
       const latestRevision = revisions && revisions.length > 0 ? revisions[revisions.length - 1] : null;
-      const plannedTotal = latestRevision ? Number(latestRevision.amount_planned) : 0;
+      let plannedTotal = latestRevision ? Number(latestRevision.amount_planned) : 0;
+
+      // 既存データで revision が 0 のままの場合、
+      // Order に紐づく Payment1 については「ベール単価 × ベール数」から推定して表示だけ補正する
+      if (
+        plannedTotal === 0 &&
+        payment.scope === "ORDER" &&
+        payment.payment_type === "PAYMENT1" &&
+        payment.order_id
+      ) {
+        const { data: order } = await supabase
+          .from("orders")
+          .select("unit_price, bales_count")
+          .eq("id", payment.order_id)
+          .single();
+        if (order && order.unit_price != null && order.bales_count != null) {
+          const estimated = Number(order.unit_price) * Number(order.bales_count);
+          if (!Number.isNaN(estimated) && estimated > 0) {
+            plannedTotal = estimated;
+          }
+        }
+      }
       const paidTotal =
         txs?.reduce((sum, t) => {
           return sum + Number(t.amount_paid);

@@ -102,12 +102,15 @@ export function TaskDateEdit({ tasks, paymentIds }: Props) {
         const next = { ...prev };
         const p1 = json.find((l) => l.payment.payment_type === "PAYMENT1");
         const p2 = json.find((l) => l.payment.payment_type === "PAYMENT2");
-        if (p1 && !next.PAYMENT1 && p1.latest_planned) {
+
+        // まだ入力されていない場合は、最新の予定額で初期表示する
+        if (p1 && (next.PAYMENT1 === "" || next.PAYMENT1 === "0") && p1.latest_planned != null) {
           next.PAYMENT1 = String(p1.latest_planned);
         }
-        if (p2 && !next.PAYMENT2 && p2.latest_planned) {
+        if (p2 && (next.PAYMENT2 === "" || next.PAYMENT2 === "0") && p2.latest_planned != null) {
           next.PAYMENT2 = String(p2.latest_planned);
         }
+
         return next;
       });
     } catch {

@@ -263,11 +263,25 @@ export async function POST(req: NextRequest) {
   if (paymentsError) {
     console.error("POST /api/orders payments auto-create error", paymentsError);
   } else if (payments && payments.length > 0) {
-    const revisions = payments.map((p) => ({
-      payment_id: p.id,
-      amount_planned: 0,
-      revised_by: null,
-    }));
+    // Payment1 の初期予定額は「ベール単価 × ベール数」とする
+    const initialPayment1Planned =
+      order.unit_price != null && order.bales_count != null
+        ? Number(order.unit_price) * Number(order.bales_count)
+        : 0;
+
+    const revisions = payments.map((p) => {
+      let plannedAmount = 0;
+      if (p.payment_type === "PAYMENT1") {
+        plannedAmount = initialPayment1Planned;
+      }
+      // PAYMENT2 はユーザーが後から設定する前提で 0 のまま
+      return {
+        payment_id: p.id,
+        amount_planned: plannedAmount,
+        revised_by: null,
+      };
+    });
+
     const { error: revError } = await supabase.from("payment_revisions").insert(revisions);
     if (revError) {
       console.error("POST /api/orders payment_revisions auto-create error", revError);

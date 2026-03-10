@@ -141,11 +141,14 @@ export function DocumentList({ scope, orderId, shipmentId, paymentId, title }: P
             <option key={d.value} value={d.value}>{d.label}</option>
           ))}
         </select>
-        <input
-          type="file"
-          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          className="text-xs cursor-pointer"
-        />
+        <label className="inline-flex cursor-pointer items-center rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition-colors hover:border-sky-400 hover:bg-sky-50 hover:text-sky-700">
+          ファイルを選択
+          <input
+            type="file"
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            className="hidden"
+          />
+        </label>
         <Button
           type="submit"
           disabled={loading || !file}
