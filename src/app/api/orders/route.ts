@@ -162,15 +162,28 @@ export async function POST(req: NextRequest) {
 
   const orderId = order.id as string;
 
-  // 1. Order工程タスク(1-4)自動生成
-  const taskInserts = ORDER_TASK_DEFS.map((def) => ({
-    scope: "ORDER",
-    order_id: orderId,
-    shipment_id: null,
-    task_key: def.task_key,
-    title: def.title,
-    assignee: null,
-  }));
+  // 1. Order工程タスク(10ステップ)自動生成
+  const today = new Date().toISOString().slice(0, 10);
+  const taskInserts = ORDER_TASK_DEFS.map((def, index) => {
+    const base = {
+      scope: "ORDER" as const,
+      order_id: orderId,
+      shipment_id: null as string | null,
+      task_key: def.task_key,
+      title: def.title,
+      assignee: null as string | null,
+    };
+    if (index === 0) {
+      // 注文書作成 / Order created は注文作成と同時に完了扱い
+      return {
+        ...base,
+        status: "COMPLETED",
+        planned_date: order.order_date ?? today,
+        completed_date: order.order_date ?? today,
+      };
+    }
+    return base;
+  });
 
   const { error: tasksError } = await supabase.from("tasks").insert(taskInserts);
   if (tasksError) {

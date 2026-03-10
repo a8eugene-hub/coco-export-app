@@ -7,6 +7,7 @@ import { Button, StatusBadge } from "@/components/ui";
 type Task = {
   id: string;
   scope: string;
+  task_key?: string;
   title: string;
   status: string;
   planned_date: string | null;
@@ -49,6 +50,25 @@ export function TaskDateEdit({ tasks }: { tasks: Task[] }) {
       ].includes(t.title),
   );
 
+  const ORDER_FLOW_KEYS = [
+    "ORDER_CREATED",
+    "PROFORMA_ISSUED",
+    "PRODUCTION_INSTRUCTED",
+    "VESSEL_BOOKED",
+    "PRODUCTION_COMPLETED",
+    "SHIPMENT_DONE",
+    "BL_ISSUED",
+    "DOCUMENTS_SENT",
+    "PAYMENT_RECEIVED",
+    "ARRIVED_JAPAN",
+  ];
+
+  const sortedTasks = [...visibleTasks].sort((a, b) => {
+    const ia = ORDER_FLOW_KEYS.indexOf(a.task_key ?? "");
+    const ib = ORDER_FLOW_KEYS.indexOf(b.task_key ?? "");
+    return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+  });
+
   function startEdit(t: Task) {
     setEditingId(t.id);
     setPlanned(t.planned_date ?? "");
@@ -84,7 +104,7 @@ export function TaskDateEdit({ tasks }: { tasks: Task[] }) {
 
   return (
     <ul className="mt-2 space-y-2 text-xs">
-      {visibleTasks.map((t) => (
+      {sortedTasks.map((t) => (
         <li key={t.id} className="flex items-center justify-between rounded-lg border border-slate-100 p-2">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
