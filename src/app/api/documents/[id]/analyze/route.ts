@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import pdfParse from "pdf-parse";
+import * as pdfParse from "pdf-parse";
 import { createServiceClient, getAuthUserFromRequest } from "@/lib/supabaseClient";
 
 export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {
@@ -35,7 +35,8 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
 
   let text = "";
   try {
-    const parsed = await pdfParse(buffer);
+    // pdf-parse は CommonJS エクスポートのため名前空間インポート経由で呼び出す
+    const parsed = await (pdfParse as any)(buffer);
     text = parsed.text || "";
   } catch (e) {
     console.error("proforma analyze pdf-parse error", e);
