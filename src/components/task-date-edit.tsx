@@ -209,9 +209,20 @@ export function TaskDateEdit({ tasks, paymentIds }: Props) {
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <span className="font-medium text-slate-900">{titleLabel(t.title)}</span>
-              <span className="text-[11px] text-slate-500">
-                （{statusLabel(t.status)}）
-              </span>
+              {(() => {
+                const text = statusLabel(t.status);
+                const isCompleted = Boolean(t.completed_date);
+                const bg = isCompleted ? "#DCFCE7" : "#F3F4F6"; // emerald-100 / slate-100 相当
+                const fg = isCompleted ? "#166534" : "#4B5563"; // emerald-800 / slate-600 相当
+                return (
+                  <span
+                    className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium"
+                    style={{ backgroundColor: bg, color: fg }}
+                  >
+                    {text}
+                  </span>
+                );
+              })()}
             </div>
             {editingId === t.id ? (
               <div className="mt-2 flex flex-col gap-2">
