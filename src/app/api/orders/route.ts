@@ -161,26 +161,78 @@ export async function POST(req: NextRequest) {
 
   const orderId = order.id as string;
 
-  // 1. Order工程タスク(10ステップ)自動生成
+  // 1. Order工程タスク(進捗ステップ)自動生成
   const today = new Date().toISOString().slice(0, 10);
-  const taskInserts = ORDER_TASK_DEFS.map((def, index) => {
-    const base = {
-      scope: "ORDER" as const,
+
+  const parseDate = (value: string | null): Date | null => {
+    if (!value) return null;
+    // "YYYY-MM-DD" 形式だけ扱う
+    const iso = value.slice(0, 10);
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? null : d;
+  };
+
+  const addDays = (base: Date, diff: number): string => {
+    const d = new Date(base);
+    d.setDate(d.getDate() + diff);
+    return d.toISOString().slice(0, 10);
+  };
+
+  const etaDate = parseDate(requested_eta ?? null);
+
+  const taskInserts = ORDER_TASK_DEFS.map((def) => {
+    const base: any = {
+      scope: "ORDER",
       order_id: orderId,
-      shipment_id: null as string | null,
+      shipment_id: null,
       task_key: def.task_key,
       title: def.title,
-      assignee: null as string | null,
+      assignee: null,
     };
-    if (index === 0) {
+
+    if (def.task_key === "ORDER_CREATED") {
       // 注文書作成 / Order created は注文作成と同時に完了扱い
       return {
         ...base,
         status: "COMPLETED",
-        planned_date: order.order_date ?? today,
+        planned_date: null,
         completed_date: order.order_date ?? today,
       };
     }
+
+    // ETA から逆算して予定日を設定（入金系は除く）
+    if (etaDate) {
+      let offsetDays: number | null = null;
+      switch (def.task_key) {
+        case "PROFORMA_ISSUED":
+          offsetDays = -45;
+          break;
+        case "PRODUCTION_INSTRUCTED":
+          offsetDays = -40;
+          break;
+        case "VESSEL_BOOKED":
+          offsetDays = -30;
+          break;
+        case "BL_ISSUED":
+          offsetDays = -10;
+          break;
+        case "DOCUMENTS_SENT":
+          offsetDays = -7;
+          break;
+        case "ARRIVED_JAPAN":
+          offsetDays = 0;
+          break;
+        case "PAYMENT_RECEIVED":
+        case "WPJ_FEE_PAID":
+        default:
+          offsetDays = null;
+          break;
+      }
+      if (offsetDays !== null) {
+        base.planned_date = addDays(etaDate, offsetDays);
+      }
+    }
+
     return base;
   });
 

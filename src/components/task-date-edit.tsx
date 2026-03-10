@@ -203,15 +203,17 @@ export function TaskDateEdit({ tasks, paymentIds }: Props) {
             {editingId === t.id ? (
               <div className="mt-2 flex flex-col gap-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <label className="flex items-center gap-1">
-                    <span className="text-[11px] text-slate-500">予定:</span>
-                    <input
-                      type="date"
-                      value={planned}
-                      onChange={(e) => setPlanned(e.target.value)}
-                      className="rounded border border-slate-200 px-2 py-1 text-[11px]"
-                    />
-                  </label>
+                  {t.task_key !== "ORDER_CREATED" && (
+                    <label className="flex items-center gap-1">
+                      <span className="text-[11px] text-slate-500">予定:</span>
+                      <input
+                        type="date"
+                        value={planned}
+                        onChange={(e) => setPlanned(e.target.value)}
+                        className="rounded border border-slate-200 px-2 py-1 text-[11px]"
+                      />
+                    </label>
+                  )}
                   <label className="flex items-center gap-1">
                     <span className="text-[11px] text-slate-500">完了:</span>
                     <input
