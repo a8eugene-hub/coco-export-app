@@ -49,7 +49,10 @@ export function DocumentList({ scope, orderId, shipmentId, paymentId, title }: P
       .catch(() => {});
   }
 
-  useEffect(() => load(), [scope, orderId, shipmentId, paymentId]);
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scope, orderId, shipmentId, paymentId]);
 
   async function upload(e: React.FormEvent) {
     e.preventDefault();
