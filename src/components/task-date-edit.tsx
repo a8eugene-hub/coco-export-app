@@ -47,20 +47,20 @@ export function TaskDateEdit({ tasks }: { tasks: Task[] }) {
         "PO uploaded",
         "AI extracted",
         "Order approved",
-      ].includes(t.title),
+      ].includes(t.title) &&
+      !["PRODUCTION_COMPLETED", "SHIPMENT_DONE"].includes(t.task_key ?? ""),
   );
 
   const ORDER_FLOW_KEYS = [
-    "ORDER_CREATED",
-    "PROFORMA_ISSUED",
-    "PRODUCTION_INSTRUCTED",
-    "VESSEL_BOOKED",
-    "PRODUCTION_COMPLETED",
-    "SHIPMENT_DONE",
-    "BL_ISSUED",
-    "DOCUMENTS_SENT",
-    "PAYMENT_RECEIVED",
-    "ARRIVED_JAPAN",
+    "ORDER_CREATED",          // 注文書作成 / Order created
+    "PROFORMA_ISSUED",        // Proforma Invoice
+    "PRODUCTION_INSTRUCTED",  // 生産指示
+    "VESSEL_BOOKED",          // 船ブッキング
+    "BL_ISSUED",              // B/L発行
+    "DOCUMENTS_SENT",         // 書類送付
+    "PAYMENT_RECEIVED",       // 入金
+    "ARRIVED_JAPAN",          // 日本到着
+    "WPJ_FEE_PAID",           // WPJへの報酬支払い
   ];
 
   const sortedTasks = [...visibleTasks].sort((a, b) => {

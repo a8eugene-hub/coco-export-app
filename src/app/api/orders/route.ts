@@ -3,15 +3,14 @@ import { createServiceClient, getAuthUserFromRequest } from "@/lib/supabaseClien
 
 const ORDER_TASK_DEFS = [
   { task_key: "ORDER_CREATED", title: "注文書作成 / Order created" },
-  { task_key: "PROFORMA_ISSUED", title: "Proforma Invoice 発行" },
+  { task_key: "PROFORMA_ISSUED", title: "Proforma Invoice" },
   { task_key: "PRODUCTION_INSTRUCTED", title: "生産指示" },
   { task_key: "VESSEL_BOOKED", title: "船ブッキング" },
-  { task_key: "PRODUCTION_COMPLETED", title: "生産完了" },
-  { task_key: "SHIPMENT_DONE", title: "船積み" },
-  { task_key: "BL_ISSUED", title: "B/L 発行" },
+  { task_key: "BL_ISSUED", title: "B/L発行" },
   { task_key: "DOCUMENTS_SENT", title: "書類送付" },
   { task_key: "PAYMENT_RECEIVED", title: "入金" },
   { task_key: "ARRIVED_JAPAN", title: "日本到着" },
+  { task_key: "WPJ_FEE_PAID", title: "WPJへの報酬支払い" },
 ] as const;
 
 export async function GET(req: NextRequest) {
