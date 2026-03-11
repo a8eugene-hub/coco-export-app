@@ -220,9 +220,6 @@ export default async function OrderDetailPage({ params }: Params) {
             </p>
             <div className="mt-3">
               <PaymentWidget paymentIds={paymentIds} />
-              <p className="mt-2 text-[11px] text-slate-400">
-                ※ 入金・WPJへの報酬支払いの登録直後は、Payment1 / Payment2 への反映に数十秒かかる場合があります。
-              </p>
             </div>
           </Card>
           <DocumentList scope="ORDER" orderId={order.id} title="Order ドキュメント" />

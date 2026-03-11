@@ -52,13 +52,16 @@ export function TaskDateEdit({ tasks, paymentIds }: Props) {
     return s;
   };
 
-  const titleLabel = (title: string) => {
+  const titleLabel = (title: string, taskKey?: string) => {
     // 旧4工程の英語タイトルを日本語にマッピング
     if (title === "Order received") return "注文受領";
     if (title === "PO uploaded") return "注文書アップロード";
     if (title === "AI extracted") return "AI取込";
     if (title === "Order approved") return "注文承認";
-    // それ以外はそのまま（10ステップ用タイトルなど）
+    // 10ステップの表示名（DBに旧名称が入っている既存注文も新しい名称で表示）
+    if (title === "生産指示" || taskKey === "PRODUCTION_INSTRUCTED") return "ココピート準備、指示";
+    if (title === "書類送付" || taskKey === "DOCUMENTS_SENT") return "コンサイニーに書類送付";
+    if (title === "日本到着" || taskKey === "ARRIVED_JAPAN") return "コンテナ日本到着";
     return title;
   };
 
@@ -208,7 +211,7 @@ export function TaskDateEdit({ tasks, paymentIds }: Props) {
         <li key={t.id} className="flex items-center justify-between rounded-lg border border-slate-100 p-2">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <span className="font-medium text-slate-900">{titleLabel(t.title)}</span>
+              <span className="font-medium text-slate-900">{titleLabel(t.title, t.task_key)}</span>
               {(() => {
                 const text = statusLabel(t.status);
                 const isCompleted = Boolean(t.completed_date);

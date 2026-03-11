@@ -117,6 +117,10 @@ function PaymentLedgerCard({ ledger: l, onRecorded }: { ledger: LedgerResponse; 
       setMemo("");
       setOpen(false);
       onRecorded();
+      // 一覧の Payment1 / Payment2 ステータスにも確実に反映させるため、ページをリロードする
+      if (typeof window !== "undefined") {
+        window.location.reload();
+      }
     } catch (err) {
       console.error(err);
       setError("通信に失敗しました");
