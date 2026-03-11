@@ -45,6 +45,12 @@ export function PaymentWidget({ paymentIds }: { paymentIds: string[] }) {
   );
 }
 
+function paymentStatusLabel(status: LedgerResponse["status"]) {
+  if (status === "PAID") return "入金完了";
+  if (status === "PARTIAL") return "入金中";
+  return "未入金";
+}
+
 function PaymentLedgerCard({ ledger: l, onRecorded }: { ledger: LedgerResponse; onRecorded: () => void }) {
   const [open, setOpen] = useState(false);
   const [openRevision, setOpenRevision] = useState(false);
@@ -134,7 +140,7 @@ function PaymentLedgerCard({ ledger: l, onRecorded }: { ledger: LedgerResponse; 
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="font-medium text-slate-900">{l.payment.payment_type}</span>
-          <StatusBadge label={l.status} tone={statusTone(l.status)} />
+          <StatusBadge label={paymentStatusLabel(l.status)} tone={statusTone(l.status)} />
         </div>
         <div className="text-[11px] text-slate-500">期日: {l.payment.due_date ?? "-"}</div>
       </div>

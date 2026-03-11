@@ -110,7 +110,7 @@ export default async function OrdersPage({ searchParams }: PageProps) {
                   <td className="px-3 py-2">
                     {o.payment1 && (
                       <StatusBadge
-                        label={`P1: ${o.payment1.status}`}
+                        label={`P1: ${paymentStatusLabel(o.payment1.status)}`}
                         tone={statusTone(o.payment1.status)}
                       />
                     )}
@@ -118,7 +118,7 @@ export default async function OrdersPage({ searchParams }: PageProps) {
                   <td className="px-3 py-2">
                     {o.payment2 && (
                       <StatusBadge
-                        label={`P2: ${o.payment2.status}`}
+                        label={`P2: ${paymentStatusLabel(o.payment2.status)}`}
                         tone={statusTone(o.payment2.status)}
                       />
                     )}
@@ -138,5 +138,11 @@ function statusTone(status: PaymentRow["status"]) {
   if (status === "PAID") return "green" as const;
   if (status === "PARTIAL") return "yellow" as const;
   return "red" as const;
+}
+
+function paymentStatusLabel(status: PaymentRow["status"]) {
+  if (status === "PAID") return "入金完了";
+  if (status === "PARTIAL") return "入金中";
+  return "未入金";
 }
 
