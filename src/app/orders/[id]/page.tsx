@@ -25,6 +25,7 @@ type OrderDetail = {
   id: string;
   order_no: string;
   order_date: string | null;
+  notes: string | null;
   proforma_no: string | null;
   destination: string | null;
   incoterms: string | null;
@@ -58,6 +59,7 @@ import { ShipmentAddForm } from "@/components/shipment-add-form";
 import { TaskDateEdit } from "@/components/task-date-edit";
 import { OrderDeleteButton } from "@/components/order-delete-button";
 import { DocumentList } from "@/components/document-list";
+import { OrderMemo } from "@/components/order-memo";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -223,6 +225,7 @@ export default async function OrderDetailPage({ params }: Params) {
             </div>
           </Card>
           <DocumentList scope="ORDER" orderId={order.id} title="Order ドキュメント" />
+          <OrderMemo orderId={order.id} initialNotes={order.notes ?? ""} />
         </div>
       </div>
     </div>
