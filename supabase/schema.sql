@@ -17,6 +17,8 @@ create type payment_scope as enum ('ORDER', 'SHIPMENT');
 
 create type document_scope as enum ('ORDER', 'SHIPMENT', 'PAYMENT');
 
+create type image_processing_status as enum ('PENDING', 'PROCESSING', 'DONE', 'FAILED', 'SKIPPED_DUPLICATE');
+
 create type document_type as enum (
   'PO',
   'PROFORMA',
@@ -227,6 +229,60 @@ alter table public.documents add constraint documents_scope_check
     or
     (scope = 'PAYMENT' and payment_id is not null and order_id is not null)
   );
+
+-- ===========================
+-- 2.x Messages (chat screenshot reconstruction) tables
+-- ===========================
+
+create table if not exists public.uploaded_images (
+  id uuid primary key default gen_random_uuid(),
+  original_filename text not null,
+  sha256_hash text not null unique,
+  mime_type text,
+  file_size bigint,
+  storage_bucket text not null default 'documents-private',
+  storage_path text not null,
+  processing_status image_processing_status not null default 'PENDING',
+  error_text text,
+  created_at timestamptz default now()
+);
+
+alter table public.uploaded_images enable row level security;
+
+create table if not exists public.extracted_messages (
+  id uuid primary key default gen_random_uuid(),
+  uploaded_image_id uuid references public.uploaded_images(id) on delete cascade,
+  sender text,
+  time_text text,
+  type text not null,
+  text_original text,
+  text_ja text,
+  file_name text,
+  file_hint text,
+  order_hint numeric,
+  source_image_id uuid,
+  dedupe_key text,
+  created_at timestamptz default now()
+);
+
+alter table public.extracted_messages enable row level security;
+
+create table if not exists public.conversation_messages (
+  id uuid primary key default gen_random_uuid(),
+  sender text,
+  time_text text,
+  type text not null,
+  text_original text,
+  text_ja text,
+  file_name text,
+  file_hint text,
+  first_uploaded_image_id uuid references public.uploaded_images(id) on delete set null,
+  dedupe_key text not null unique,
+  sort_order numeric not null default 0,
+  created_at timestamptz default now()
+);
+
+alter table public.conversation_messages enable row level security;
 
 -- DIA注文読み込み用：アップロード済みPDFと抽出データの保管
 create table if not exists public.order_draft_uploads (

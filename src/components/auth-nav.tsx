@@ -10,6 +10,7 @@ import { useLanguage } from "./language-provider";
 
 const navKeys = [
   { href: "/dashboard", key: "nav_dashboard" },
+  { href: "/messages", key: "nav_messages" },
   { href: "/orders", key: "nav_orders" },
   { href: "/shipments", key: "nav_shipments" },
   { href: "/customers", key: "nav_customers" },

@@ -3,6 +3,7 @@ export type Lang = "ja" | "en" | "si";
 export const translations: Record<Lang, Record<string, string>> = {
   ja: {
     nav_dashboard: "ダッシュボード",
+    nav_messages: "メッセージ",
     nav_orders: "注文",
     nav_shipments: "Shipment",
     nav_customers: "顧客",
@@ -14,6 +15,7 @@ export const translations: Record<Lang, Record<string, string>> = {
   },
   en: {
     nav_dashboard: "Dashboard",
+    nav_messages: "Messages",
     nav_orders: "Orders",
     nav_shipments: "Shipment",
     nav_customers: "Customers",
@@ -25,6 +27,7 @@ export const translations: Record<Lang, Record<string, string>> = {
   },
   si: {
     nav_dashboard: "උපකරණ පුවරුව",
+    nav_messages: "පණිවිඩ",
     nav_orders: "ඇණවුම්",
     nav_shipments: "Shipment",
     nav_customers: "පාරිභෝගිකයන්",
